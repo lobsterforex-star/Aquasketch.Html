@@ -1,0 +1,2989 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaSketch 3D - Akuarium Frutiger Aero</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js & OrbitControls via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Font Inter & Quicksand untuk nuansa Aero yang ramah dan modern -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Kustomisasi Gaya Frutiger Aero & Glassmorphism */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1, h2, .aero-title {
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* Latar Belakang Laut Frutiger Aero yang adem dan mendalam */
+            background: radial-gradient(ellipse at 50% 0%, #248a94 0%, #005478 42%, #002e4d 80%, #001729 100%);
+        }
+
+        /* Panel Glassmorphism khas Frutiger Aero */
+        .aero-glass {
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.52) 0%,
+                rgba(235, 250, 255, 0.28) 50%,
+                rgba(200, 242, 255, 0.4) 100%
+            );
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1.5px solid rgba(255, 255, 255, 0.78);
+            box-shadow: 
+                0 8px 32px rgba(0, 38, 68, 0.3),
+                inset 0 2px 3px rgba(255, 255, 255, 0.85),
+                inset 0 -2px 5px rgba(0, 120, 180, 0.18);
+        }
+
+        /* Tombol Glossy (Kilau Kaca ala Windows Vista / 7) */
+        .aero-btn {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.82) 0%,
+                rgba(255, 255, 255, 0.38) 48%,
+                rgba(255, 255, 255, 0.18) 52%,
+                rgba(255, 255, 255, 0.48) 100%
+            );
+            border: 1.5px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 
+                0 4px 12px rgba(0, 50, 90, 0.22),
+                inset 0 1px 1px rgba(255, 255, 255, 0.95);
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+        }
+
+        .aero-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 18px rgba(0, 180, 255, 0.45),
+                inset 0 1px 2px rgba(255, 255, 255, 1);
+            border-color: #ffffff;
+        }
+
+        .aero-btn:active {
+            transform: translateY(1px) scale(0.97);
+        }
+
+        /* Tombol Utama Hijau Segar / Aqua Glossy */
+        .aero-btn-primary {
+            background: linear-gradient(
+                180deg,
+                #8ef07d 0%,
+                #4cd946 48%,
+                #28b824 52%,
+                #5ce656 100%
+            );
+            border: 1.5px solid #d4ffd1;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 75, 10, 0.6);
+            box-shadow: 
+                0 5px 15px rgba(40, 184, 36, 0.4),
+                inset 0 1.5px 2px rgba(255, 255, 255, 0.9);
+        }
+
+        .aero-btn-primary:hover {
+            box-shadow: 
+                0 7px 22px rgba(76, 217, 70, 0.65),
+                inset 0 1.5px 2px rgba(255, 255, 255, 1);
+        }
+
+        /* Tombol Aksi Biru Aqua */
+        .aero-btn-aqua {
+            background: linear-gradient(
+                180deg,
+                #7ce8ff 0%,
+                #1ec8f5 48%,
+                #009fd4 52%,
+                #3cd4fc 100%
+            );
+            border: 1.5px solid #d6f8ff;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 55, 95, 0.6);
+            box-shadow: 
+                0 5px 15px rgba(0, 159, 212, 0.38),
+                inset 0 1.5px 2px rgba(255, 255, 255, 0.9);
+        }
+
+        /* Tombol Bahaya / Reset Merah Koral */
+        .aero-btn-danger {
+            background: linear-gradient(
+                180deg,
+                #ff9a9e 0%,
+                #ff5e62 48%,
+                #e0353b 52%,
+                #ff7579 100%
+            );
+            border: 1.5px solid #ffd6d8;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(100, 0, 10, 0.5);
+        }
+
+        /* Swatch Warna Glossy Bulat seperti Orbs Frutiger Aero */
+        .color-orb {
+            border-radius: 9999px;
+            position: relative;
+            box-shadow: 
+                0 3px 6px rgba(0, 0, 0, 0.2),
+                inset 0 2px 3px rgba(255, 255, 255, 0.85),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.25);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .color-orb::after {
+            content: '';
+            position: absolute;
+            top: 12%;
+            left: 20%;
+            width: 60%;
+            height: 32%;
+            border-radius: 9999px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 100%);
+        }
+
+        .color-orb.active {
+            transform: scale(1.22);
+            box-shadow: 
+                0 0 0 3px #ffffff,
+                0 4px 10px rgba(0, 140, 255, 0.5),
+                inset 0 2px 3px rgba(255, 255, 255, 0.9);
+        }
+
+        /* Animasi Modal */
+        @keyframes modalPop {
+            0% { opacity: 0; transform: scale(0.9) translateY(15px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-animate {
+            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Kanvas Gambar dengan Pola Kotak Transparan Halus */
+        .drawing-board-bg {
+            background-color: rgba(255, 255, 255, 0.92);
+            background-image: 
+                radial-gradient(rgba(0, 168, 232, 0.16) 1.5px, transparent 1.5px);
+            background-size: 18px 18px;
+        }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden">
+
+    <!-- Container Utama Akuarium 3D Three.js -->
+    <div id="aquarium3DContainer" class="block w-full h-full cursor-grab active:cursor-grabbing"></div>
+
+    <!-- HUD Atas: Judul & Info -->
+    <header class="fixed top-3 left-3 right-3 sm:top-4 sm:left-5 sm:right-5 flex flex-wrap items-center justify-between gap-2 pointer-events-none z-10">
+        <!-- Logo / Badge Judul -->
+        <div class="aero-glass rounded-full px-4 py-2 sm:px-5 sm:py-2.5 flex items-center gap-2.5 pointer-events-auto">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-b from-cyan-200 to-blue-600 border border-white flex items-center justify-center shadow-inner text-white">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z"/>
+                    <path d="M18 12v.5"/>
+                    <path d="M16 17.93a9.77 9.77 0 0 1 0-11.86"/>
+                    <path d="M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="aero-title text-sm sm:text-lg font-bold text-sky-950 leading-tight drop-shadow-sm">
+                    AquaSketch <span class="text-sky-700 font-semibold">3D Aero</span>
+                </h1>
+                <p id="headerSubtitle" class="text-[11px] sm:text-xs text-sky-900/85 font-medium hidden sm:block">
+                    Seret putar • Klik ikan ikuti • Klik air beri makan
+                </p>
+            </div>
+        </div>
+
+        <!-- Penghitung Ikan, Ikuti Ikan, Reset Kamera & Tombol Suara -->
+        <div class="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+            <div class="aero-glass rounded-full px-3 py-2 flex items-center gap-1.5 text-sky-950 font-semibold text-xs sm:text-sm">
+                <svg class="w-4 h-4 text-sky-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z"/>
+                    <path d="M7 10.67C7 8 5.58 5.97 2.73 5.5c-1 1.5-1 5 .23 6.5-1.24 1.5-1.24 5-.23 6.5C5.58 18.03 7 16 7 13.33"/>
+                </svg>
+                <span id="fishCount" class="bg-white/75 px-2 py-0.5 rounded-full text-sky-800 font-bold shadow-inner">0</span>
+            </div>
+
+            <button id="followFishBtn" title="Ikuti Ikan" class="aero-btn rounded-full px-3 h-10 flex items-center justify-center gap-1.5 text-sky-950 font-semibold text-xs sm:text-sm">
+                <svg class="w-4 h-4 text-sky-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                    <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                    <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                </svg>
+                <span id="followFishLabel" class="hidden sm:inline">Ikuti</span>
+            </button>
+
+            <button id="resetCamBtn" title="Reset Kamera" class="aero-btn rounded-full px-3 h-10 flex items-center justify-center gap-1.5 text-sky-950 font-semibold text-xs sm:text-sm">
+                <svg class="w-4 h-4 text-sky-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                </svg>
+                <span class="hidden md:inline">Reset</span>
+            </button>
+
+            <button id="toggleSoundBtn" title="Suara" class="aero-btn rounded-full w-10 h-10 flex items-center justify-center text-sky-950">
+                <svg id="soundIconOn" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                </svg>
+                <svg id="soundIconOff" class="w-4 h-4 hidden text-rose-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <line x1="23" y1="9" x2="17" y2="15"/>
+                    <line x1="17" y1="9" x2="23" y2="15"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Notifikasi Toast Melayang -->
+    <div id="toastContainer" class="fixed top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex flex-col items-center gap-2 w-11/12 max-w-sm"></div>
+
+    <!-- HUD Bawah: Kontrol Kolam -->
+    <footer class="fixed bottom-4 left-3 right-3 sm:bottom-6 flex justify-center pointer-events-none z-10">
+        <div class="aero-glass rounded-3xl sm:rounded-full p-2 sm:px-4 sm:py-2.5 flex flex-wrap items-center justify-center gap-2 sm:gap-3 pointer-events-auto shadow-xl">
+            
+            <!-- Tombol Gambar Ikan Baru -->
+            <button id="openDrawModalBtn" class="aero-btn aero-btn-primary rounded-full px-4 py-2.5 sm:px-5 sm:py-3 font-bold text-sm flex items-center gap-1.5">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                    <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                    <path d="M2 2l7.586 7.586"/>
+                    <circle cx="11" cy="11" r="2"/>
+                </svg>
+                <span>Gambar</span>
+            </button>
+
+            <!-- Tombol Tebar Makanan -->
+            <button id="dropFoodBtn" class="aero-btn aero-btn-aqua rounded-full px-4 py-2.5 sm:px-5 sm:py-3 font-semibold text-sm flex items-center gap-1.5">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <circle cx="19" cy="7" r="2"/>
+                    <circle cx="6" cy="17" r="2"/>
+                    <circle cx="17" cy="17" r="1.5"/>
+                </svg>
+                <span>Makan</span>
+            </button>
+
+            <!-- Tombol Gelembung Ekstra -->
+            <button id="bubbleBurstBtn" class="aero-btn rounded-full px-3.5 py-2.5 sm:px-4 sm:py-3 font-semibold text-sky-950 text-sm flex items-center gap-1.5" title="Gelembung">
+                <svg class="w-4 h-4 text-sky-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="14" r="5"/>
+                    <circle cx="17" cy="8" r="3"/>
+                    <circle cx="16" cy="17" r="2"/>
+                </svg>
+                <span class="hidden sm:inline">Gelembung</span>
+            </button>
+
+            <!-- Tombol Bersihkan Kolam -->
+            <button id="clearPondBtn" class="aero-btn aero-btn-danger rounded-full px-3.5 py-2.5 sm:px-4 sm:py-3 font-semibold text-sm flex items-center gap-1.5" title="Kosongkan">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                <span class="hidden md:inline">Kosongkan</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Modal Kanvas Menggambar Ikan (Glassmorphism) -->
+    <div id="drawingModal" class="fixed inset-0 z-40 hidden flex items-center justify-center p-3 sm:p-5 bg-sky-950/35 backdrop-blur-sm transition-opacity duration-200">
+        <div class="aero-glass modal-animate rounded-3xl w-full max-w-2xl p-4 sm:p-6 flex flex-col gap-3.5 relative">
+            
+            <!-- Header Modal -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="aero-title text-lg sm:text-xl font-bold text-sky-950 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-sky-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3Z"/>
+                            <path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7"/>
+                        </svg>
+                        <span>Gambar Ikan</span>
+                    </h2>
+                    <p class="text-xs text-sky-900/85 font-medium flex items-center gap-1 mt-0.5">
+                        <span>Hadapkan kepala ke <strong>KANAN</strong></span>
+                        <svg class="w-3.5 h-3.5 text-sky-800 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                            <polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                    </p>
+                </div>
+                <button id="closeModalBtn" class="aero-btn rounded-full w-9 h-9 flex items-center justify-center text-sky-950 font-bold" title="Tutup">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Area Kanvas Gambar Diperluas -->
+            <div class="relative w-full aspect-[16/9] rounded-2xl overflow-hidden border-2 border-white shadow-inner drawing-board-bg">
+                <!-- Panduan Siluet Samar di Latar Kanvas -->
+                <div id="guideOverlay" class="absolute inset-0 pointer-events-none flex items-center justify-center opacity-25">
+                    <svg viewBox="0 0 240 135" class="w-4/5 h-4/5 stroke-sky-600 fill-none" stroke-width="2" stroke-dasharray="5,5">
+                        <path d="M 60,67 C 80,22 160,22 190,67 C 160,112 80,112 60,67 Z" />
+                        <path d="M 60,67 L 25,35 L 35,67 L 25,99 Z" />
+                        <circle cx="165" cy="55" r="7" />
+                        <path d="M 200,67 L 222,67 M 212,58 L 222,67 L 212,76" stroke-width="2.5" />
+                    </svg>
+                </div>
+
+                <canvas id="drawCanvas" class="w-full h-full touch-none cursor-crosshair relative z-10"></canvas>
+
+                <!-- Tombol Toggle Panduan & Bersihkan Kanvas -->
+                <div class="absolute top-2.5 right-2.5 z-20 flex gap-1.5">
+                    <button id="toggleGuideBtn" class="aero-btn rounded-full px-2.5 py-1 text-xs font-semibold text-sky-900 bg-white/80 flex items-center gap-1" title="Tampilkan/Sembunyikan Panduan">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span>Panduan</span>
+                    </button>
+                    <button id="clearCanvasBtn" class="aero-btn rounded-full px-2.5 py-1 text-xs font-semibold text-rose-700 bg-white/80 flex items-center gap-1" title="Hapus Semua Gambar">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                        </svg>
+                        <span>Hapus</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Palet Warna Frutiger Aero -->
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-sky-950 uppercase tracking-wider">Warna & Kuas</span>
+                    <!-- Ukuran Kuas -->
+                    <div class="flex items-center gap-1.5 bg-white/40 px-2.5 py-1 rounded-full border border-white/60">
+                        <button data-size="4" class="brush-size-btn w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/60 transition" title="Kuas Kecil">
+                            <span class="w-1.5 h-1.5 rounded-full bg-sky-950 block"></span>
+                        </button>
+                        <button data-size="9" class="brush-size-btn active bg-white/90 shadow-sm w-6 h-6 rounded-full flex items-center justify-center transition" title="Kuas Sedang">
+                            <span class="w-3 h-3 rounded-full bg-sky-950 block"></span>
+                        </button>
+                        <button data-size="16" class="brush-size-btn w-6 h-6 rounded-full flex items-center justify-center hover:bg-white/60 transition" title="Kuas Besar">
+                            <span class="w-4 h-4 rounded-full bg-sky-950 block"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Baris Orbs Warna + Penghapus -->
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-white/35 p-2.5 rounded-2xl border border-white/60">
+                    <div id="colorPalette" class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                        <!-- Diisi otomatis via JS -->
+                    </div>
+
+                    <!-- Alat Penghapus -->
+                    <button id="eraserBtn" class="aero-btn rounded-full px-3 py-1.5 text-xs font-bold text-sky-950 flex items-center gap-1.5" title="Penghapus">
+                        <svg class="w-3.5 h-3.5 text-sky-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/>
+                            <path d="M22 21H7"/>
+                            <path d="m5 11 9 9"/>
+                        </svg>
+                        <span>Hapus</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi Modal -->
+            <div class="flex items-center justify-end gap-2.5 pt-1">
+                <button id="presetFishBtn" class="aero-btn rounded-full px-4 py-2 text-xs sm:text-sm font-semibold text-sky-950 flex items-center gap-1.5" title="Ikan Contoh">
+                    <svg class="w-4 h-4 text-sky-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                    </svg>
+                    <span>Contoh</span>
+                </button>
+                <button id="spawnFishBtn" class="aero-btn aero-btn-primary rounded-full px-5 py-2.5 text-sm font-bold flex items-center gap-1.5 flex-1 sm:flex-initial justify-center">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>
+                        <path d="M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>
+                        <path d="M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>
+                    </svg>
+                    <span>Lepaskan</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ============================================================================
+         * AQUASKETCH 3D AERO - AKUARIUM 3D THREE.JS & GAMBAR IKAN INTERAKTIF
+         * ============================================================================
+         */
+
+        // --- 1. SISTEM AUDIO SINTETIS (WEB AUDIO API) ---
+        class AeroSoundSystem {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                return this.muted;
+            }
+
+            playBubble(pitchMultiplier = 1) {
+                if (this.muted) return;
+                try {
+                    this.init();
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sine';
+                    const startFreq = (280 + Math.random() * 180) * pitchMultiplier;
+                    osc.frequency.setValueAtTime(startFreq, now);
+                    osc.frequency.exponentialRampToValueAtTime(startFreq * 2.1, now + 0.14);
+
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.16);
+                } catch (e) {}
+            }
+
+            playSplashSpawn() {
+                if (this.muted) return;
+                try {
+                    this.init();
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, i) => {
+                        const now = this.ctx.currentTime + i * 0.065;
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now);
+
+                        gain.gain.setValueAtTime(0.001, now);
+                        gain.gain.linearRampToValueAtTime(0.1, now + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+
+                        osc.start(now);
+                        osc.stop(now + 0.36);
+                    });
+                } catch (e) {}
+            }
+
+            playNibble() {
+                if (this.muted) return;
+                this.playBubble(1.4);
+            }
+        }
+
+        const sound = new AeroSoundSystem();
+
+        // --- 2. UTILITAS NOTIFIKASI TOAST ---
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'aero-glass rounded-full px-4 py-2 text-sky-950 font-semibold text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-all duration-300 opacity-0 -translate-y-2';
+            toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-cyan-500 ring-2 ring-white shrink-0"></span><span>${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('opacity-0', '-translate-y-2');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 2400);
+        }
+
+        // --- 3. PENGATURAN KANVAS GAMBAR IKAN ---
+        const drawCanvas = document.getElementById('drawCanvas');
+        const drawCtx = drawCanvas.getContext('2d', { willReadFrequently: true });
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let currentColor = '#ff5e3a';
+        let currentBrushSize = 9;
+        let isEraser = false;
+        let hasDrawnSomething = false;
+
+        const aeroColors = [
+            { name: 'Oranye Nemo', hex: '#ff5e3a' },
+            { name: 'Kuning Lemon', hex: '#ffd000' },
+            { name: 'Hijau Segar', hex: '#28d43c' },
+            { name: 'Biru Aqua', hex: '#00b4ff' },
+            { name: 'Biru Laut', hex: '#0055d4' },
+            { name: 'Ungu Koral', hex: '#9b4dff' },
+            { name: 'Merah Jambu', hex: '#ff4791' },
+            { name: 'Putih Mutiara', hex: '#ffffff' },
+            { name: 'Hitam Mata', hex: '#1a2530' }
+        ];
+
+        const paletteContainer = document.getElementById('colorPalette');
+        aeroColors.forEach((c, index) => {
+            const btn = document.createElement('button');
+            btn.className = `color-orb w-7 h-7 sm:w-8 sm:h-8 cursor-pointer ${index === 0 ? 'active' : ''}`;
+            btn.style.backgroundColor = c.hex;
+            btn.title = c.name;
+            btn.addEventListener('click', () => {
+                isEraser = false;
+                currentColor = c.hex;
+                document.querySelectorAll('.color-orb').forEach(el => el.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('eraserBtn').classList.remove('ring-2', 'ring-sky-500', 'bg-white');
+            });
+            paletteContainer.appendChild(btn);
+        });
+
+        function resizeDrawCanvas() {
+            const rect = drawCanvas.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) return;
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = drawCanvas.width;
+            tempCanvas.height = drawCanvas.height;
+            if (tempCanvas.width > 0 && tempCanvas.height > 0) {
+                tempCanvas.getContext('2d').drawImage(drawCanvas, 0, 0);
+            }
+
+            drawCanvas.width = 720;
+            drawCanvas.height = 405;
+            drawCtx.lineCap = 'round';
+            drawCtx.lineJoin = 'round';
+
+            if (tempCanvas.width > 0) {
+                drawCtx.drawImage(tempCanvas, 0, 0, drawCanvas.width, drawCanvas.height);
+            }
+        }
+
+        function getDrawPos(e) {
+            const rect = drawCanvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) * (drawCanvas.width / rect.width),
+                y: (clientY - rect.top) * (drawCanvas.height / rect.height)
+            };
+        }
+
+        function startDraw(e) {
+            e.preventDefault();
+            isDrawing = true;
+            hasDrawnSomething = true;
+            const pos = getDrawPos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+
+            drawCtx.beginPath();
+            if (isEraser) {
+                drawCtx.globalCompositeOperation = 'destination-out';
+                drawCtx.arc(lastX, lastY, currentBrushSize, 0, Math.PI * 2);
+                drawCtx.fill();
+            } else {
+                drawCtx.globalCompositeOperation = 'source-over';
+                drawCtx.fillStyle = currentColor;
+                drawCtx.arc(lastX, lastY, currentBrushSize / 2, 0, Math.PI * 2);
+                drawCtx.fill();
+            }
+        }
+
+        function moveDraw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const pos = getDrawPos(e);
+
+            drawCtx.beginPath();
+            drawCtx.moveTo(lastX, lastY);
+            drawCtx.lineTo(pos.x, pos.y);
+            drawCtx.lineWidth = isEraser ? currentBrushSize * 2 : currentBrushSize;
+
+            if (isEraser) {
+                drawCtx.globalCompositeOperation = 'destination-out';
+            } else {
+                drawCtx.globalCompositeOperation = 'source-over';
+                drawCtx.strokeStyle = currentColor;
+            }
+
+            drawCtx.stroke();
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        function endDraw() {
+            isDrawing = false;
+            drawCtx.globalCompositeOperation = 'source-over';
+        }
+
+        drawCanvas.addEventListener('mousedown', startDraw);
+        drawCanvas.addEventListener('mousemove', moveDraw);
+        window.addEventListener('mouseup', endDraw);
+        drawCanvas.addEventListener('touchstart', startDraw, { passive: false });
+        drawCanvas.addEventListener('touchmove', moveDraw, { passive: false });
+        window.addEventListener('touchend', endDraw);
+
+        document.querySelectorAll('.brush-size-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentBrushSize = parseInt(btn.dataset.size, 10);
+                document.querySelectorAll('.brush-size-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-white/90', 'shadow-sm');
+                });
+                btn.classList.add('active', 'bg-white/90', 'shadow-sm');
+            });
+        });
+
+        document.getElementById('eraserBtn').addEventListener('click', (e) => {
+            isEraser = true;
+            document.querySelectorAll('.color-orb').forEach(el => el.classList.remove('active'));
+            e.currentTarget.classList.add('ring-2', 'ring-sky-500', 'bg-white');
+        });
+
+        function clearDrawingBoard() {
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            hasDrawnSomething = false;
+        }
+
+        document.getElementById('clearCanvasBtn').addEventListener('click', () => {
+            clearDrawingBoard();
+            sound.playBubble(0.8);
+        });
+
+        document.getElementById('toggleGuideBtn').addEventListener('click', () => {
+            document.getElementById('guideOverlay').classList.toggle('hidden');
+        });
+
+        function drawPresetFish(variant = 0) {
+            clearDrawingBoard();
+            drawCtx.globalCompositeOperation = 'source-over';
+            const cy = 202;
+
+            if (variant % 2 === 0) {
+                drawCtx.fillStyle = '#ff5e3a';
+                drawCtx.beginPath();
+                drawCtx.moveTo(215, cy);
+                drawCtx.quadraticCurveTo(155, cy - 65, 165, cy);
+                drawCtx.quadraticCurveTo(155, cy + 65, 215, cy);
+                drawCtx.fill();
+
+                drawCtx.fillStyle = '#ff8c00';
+                drawCtx.beginPath();
+                drawCtx.ellipse(335, cy - 62, 42, 26, -0.2, 0, Math.PI * 2);
+                drawCtx.fill();
+                drawCtx.beginPath();
+                drawCtx.ellipse(330, cy + 60, 34, 22, 0.2, 0, Math.PI * 2);
+                drawCtx.fill();
+
+                drawCtx.fillStyle = '#ff5e3a';
+                drawCtx.beginPath();
+                drawCtx.ellipse(360, cy, 130, 72, 0, 0, Math.PI * 2);
+                drawCtx.fill();
+
+                drawCtx.fillStyle = '#ffffff';
+                drawCtx.beginPath();
+                drawCtx.ellipse(325, cy, 18, 68, 0, 0, Math.PI * 2);
+                drawCtx.fill();
+                drawCtx.beginPath();
+                drawCtx.ellipse(425, cy, 15, 54, 0, 0, Math.PI * 2);
+                drawCtx.fill();
+
+                drawCtx.fillStyle = '#ffffff';
+                drawCtx.beginPath();
+                drawCtx.arc(460, cy - 16, 15, 0, Math.PI * 2);
+                drawCtx.fill();
+                drawCtx.fillStyle = '#1a2530';
+                drawCtx.beginPath();
+                drawCtx.arc(464, cy - 16, 8, 0, Math.PI * 2);
+                drawCtx.fill();
+                drawCtx.fillStyle = '#ffffff';
+                drawCtx.beginPath();
+                drawCtx.arc(467, cy - 20, 3, 0, Math.PI * 2);
+                drawCtx.fill();
+
+                drawCtx.strokeStyle = '#8c1d04';
+                drawCtx.lineWidth = 5;
+                drawCtx.beginPath();
+                drawCtx.arc(480, cy + 10, 15, 0.4, Math.PI * 0.85);
+                drawCtx.stroke();
+            } else {
+                drawCtx.fillStyle = '#ffd000';
+                drawCtx.beginPath();
+                drawCtx.moveTo(210, cy);
+                drawCtx.lineTo(145, cy - 58);
+                drawCtx.lineTo(175, cy);
+                drawCtx.lineTo(145, cy + 58);
+                drawCtx.closePath();
+                drawCtx.fill();
+
+                drawCtx.fillStyle = '#00b4ff';
+                drawCtx.beginPath();
+                drawCtx.ellipse(360, cy, 132, 75, 0, 0, Math.PI * 2);
+                drawCtx.fill();
+
+                drawCtx.fillStyle = '#28d43c';
+                drawCtx.beginPath();
+                drawCtx.ellipse(345, cy + 12, 75, 38, -0.1, 0, Math.PI * 2);
+                drawCtx.fill();
+
+                drawCtx.fillStyle = '#ffffff';
+                drawCtx.beginPath();
+                drawCtx.arc(455, cy - 18, 16, 0, Math.PI * 2);
+                drawCtx.fill();
+                drawCtx.fillStyle = '#1a2530';
+                drawCtx.beginPath();
+                drawCtx.arc(459, cy - 18, 9, 0, Math.PI * 2);
+                drawCtx.fill();
+                drawCtx.fillStyle = '#ffffff';
+                drawCtx.beginPath();
+                drawCtx.arc(462, cy - 22, 3.5, 0, Math.PI * 2);
+                drawCtx.fill();
+            }
+            hasDrawnSomething = true;
+        }
+
+        let presetCounter = 0;
+        document.getElementById('presetFishBtn').addEventListener('click', () => {
+            drawPresetFish(presetCounter++);
+            sound.playBubble(1.2);
+            showToast('Ikan contoh dimuat.');
+        });
+
+        function extractTrimmedFishSprite() {
+            if (!hasDrawnSomething) return null;
+            const w = drawCanvas.width;
+            const h = drawCanvas.height;
+            const imgData = drawCtx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+
+            let minX = w, minY = h, maxX = 0, maxY = 0;
+            let found = false;
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const alpha = data[(y * w + x) * 4 + 3];
+                    if (alpha > 15) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        found = true;
+                    }
+                }
+            }
+
+            if (!found) return null;
+
+            const padding = 20;
+            minX = Math.max(0, minX - padding);
+            minY = Math.max(0, minY - padding);
+            maxX = Math.min(w, maxX + padding);
+            maxY = Math.min(h, maxY + padding);
+
+            const boxW = maxX - minX;
+            const boxH = maxY - minY;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = boxW;
+            tempCanvas.height = boxH;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.drawImage(drawCanvas, minX, minY, boxW, boxH, 0, 0, boxW, boxH);
+            return tempCanvas;
+        }
+
+        // --- 4. THREE.JS 3D AQUARIUM & DUNIA FRUTIGER AERO ---
+        let scene, camera, renderer, controls, raycaster;
+        let sandMesh, sandGeo, causticTexture;
+        let surfaceGeo, surfaceOrigPositions;
+        let planktonPoints, planktonOrigPositions;
+        let bgBubblesGroup;
+        let followedFishIndex = -1;
+        const prevFollowPos = new THREE.Vector3();
+
+        const container3D = document.getElementById('aquarium3DContainer');
+        const clock = new THREE.Clock();
+
+        const fishes3D = [];
+        const foods3D = [];
+        const bubbles3D = [];
+        const sunBeams = [];
+        const swayingFlora = [];
+        const animatedAnemones = [];
+        const miniCrabs = [];
+        const lobsters = [];
+
+        // Zona Bebas Koral untuk Pesawat Kawanishi H6K & Kamera Hasselblad 500 C/M
+        const protectedZones = [
+            { x: -4.6, z: 1.5, r: 5.4 },   // Zona Pesawat H6K Flying Boat
+            { x: 5.6, z: -2.0, r: 2.8 }    // Zona Kamera Hasselblad 500 C/M
+        ];
+
+        function isInsideProtectedZone(x, z, margin = 0.5) {
+            for (let zone of protectedZones) {
+                const dist = Math.hypot(x - zone.x, z - zone.z);
+                if (dist < zone.r + margin) return true;
+            }
+            return false;
+        }
+
+        const POND = {
+            width: 28,
+            height: 12,
+            depth: 16,
+            floorY: -6,
+            surfaceY: 6
+        };
+
+        function setFollowedFish(index) {
+            const btn = document.getElementById('followFishBtn');
+            const label = document.getElementById('followFishLabel');
+
+            if (index < 0 || index >= fishes3D.length) {
+                followedFishIndex = -1;
+                btn.classList.remove('aero-btn-aqua');
+                label.textContent = 'Ikuti';
+                return;
+            }
+
+            followedFishIndex = index;
+            prevFollowPos.copy(fishes3D[index].mesh.position);
+            btn.classList.add('aero-btn-aqua');
+            label.textContent = `Ikan #${index + 1}`;
+        }
+
+        function resetCameraPosition() {
+            if (!camera || !controls) return;
+            setFollowedFish(-1);
+            camera.position.set(0, 4.2, 19.5);
+            controls.target.set(0, -1.0, 0);
+            controls.update();
+        }
+
+        /**
+         * Membuat tekstur latar langit & laut Frutiger Aero yang bersih, halus, dan mendalam
+         */
+        function createFrutigerAeroOceanBackground() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+
+            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            grad.addColorStop(0.0, '#32a8b3');
+            grad.addColorStop(0.24, '#116d8f');
+            grad.addColorStop(0.56, '#024063');
+            grad.addColorStop(0.86, '#00223b');
+            grad.addColorStop(1.0, '#001222');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const sunGlow = ctx.createRadialGradient(512, 40, 10, 512, 130, 440);
+            sunGlow.addColorStop(0, 'rgba(180, 245, 252, 0.28)');
+            sunGlow.addColorStop(0.5, 'rgba(70, 185, 215, 0.1)');
+            sunGlow.addColorStop(1, 'rgba(0, 70, 110, 0)');
+            ctx.fillStyle = sunGlow;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            const rayOffsets = [-280, -165, -55, 55, 165, 280];
+            rayOffsets.forEach((offset, idx) => {
+                const startX = 512 + offset;
+                const spread = offset * 0.42;
+                const rayGrad = ctx.createLinearGradient(startX, 0, startX + spread, 680);
+                rayGrad.addColorStop(0, idx % 2 === 0 ? 'rgba(175, 242, 250, 0.07)' : 'rgba(175, 242, 250, 0.045)');
+                rayGrad.addColorStop(1, 'rgba(175, 242, 250, 0)');
+                ctx.fillStyle = rayGrad;
+                ctx.beginPath();
+                ctx.moveTo(startX - 22, 0);
+                ctx.lineTo(startX + 22, 0);
+                ctx.lineTo(startX + spread + 65, 680);
+                ctx.lineTo(startX + spread - 65, 680);
+                ctx.closePath();
+                ctx.fill();
+            });
+            ctx.restore();
+
+            const bokehList = [
+                { x: 160, y: 260, r: 34 }, { x: 240, y: 420, r: 18 }, { x: 120, y: 580, r: 26 },
+                { x: 340, y: 310, r: 14 }, { x: 420, y: 510, r: 22 }, { x: 610, y: 290, r: 16 },
+                { x: 700, y: 470, r: 28 }, { x: 840, y: 250, r: 36 }, { x: 790, y: 560, r: 20 },
+                { x: 910, y: 410, r: 24 }, { x: 512, y: 380, r: 15 }, { x: 290, y: 670, r: 22 },
+                { x: 740, y: 690, r: 19 }
+            ];
+            bokehList.forEach(b => {
+                const bubbleGrad = ctx.createRadialGradient(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.1, b.x, b.y, b.r);
+                bubbleGrad.addColorStop(0, 'rgba(215, 248, 255, 0.11)');
+                bubbleGrad.addColorStop(0.75, 'rgba(90, 200, 230, 0.04)');
+                bubbleGrad.addColorStop(1, 'rgba(215, 248, 255, 0.09)');
+                ctx.fillStyle = bubbleGrad;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.fillStyle = 'rgba(0, 20, 38, 0.55)';
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            for (let x = 0; x <= canvas.width; x += 16) {
+                const hill = Math.sin(x * 0.0065) * 28 + Math.cos(x * 0.015) * 14;
+                ctx.lineTo(x, 865 + hill);
+            }
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.encoding = THREE.sRGBEncoding;
+            return tex;
+        }
+
+        function createCausticTexture() {
+            const size = 256;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#004d66';
+            ctx.fillRect(0, 0, size, size);
+
+            ctx.strokeStyle = 'rgba(185, 248, 255, 0.32)';
+            ctx.lineWidth = 2.5;
+            for (let i = 0; i < 8; i++) {
+                ctx.beginPath();
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                ctx.arc(x, y, 30 + Math.random() * 50, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        /**
+         * Membuat tekstur prosedural pasir pantai tropis krem alami (butiran halus & riak lembut)
+         */
+        function createTropicalSandTexture() {
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Base warna pasir krem pantai tropis hangat
+            ctx.fillStyle = '#f5e8cc';
+            ctx.fillRect(0, 0, size, size);
+
+            // Riak ombak pasir halus
+            for (let y = 0; y < size; y += 4) {
+                const waveAlpha = (Math.sin(y * 0.09) + 1) * 0.035;
+                ctx.fillStyle = `rgba(218, 194, 152, ${waveAlpha})`;
+                ctx.fillRect(0, y, size, 2);
+            }
+
+            // Butiran mineral pasir tropis (krem cerah, putih koral, sedikit keemasan)
+            const grainColors = ['#fffaf0', '#e6d3ad', '#d9c094', '#fcf5e6'];
+            for (let i = 0; i < 6500; i++) {
+                const gx = Math.random() * size;
+                const gy = Math.random() * size;
+                const gr = 0.6 + Math.random() * 1.3;
+                ctx.fillStyle = grainColors[i % grainColors.length];
+                ctx.globalAlpha = 0.25 + Math.random() * 0.35;
+                ctx.beginPath();
+                ctx.arc(gx, gy, gr, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(4, 3);
+            tex.encoding = THREE.sRGBEncoding;
+            return tex;
+        }
+
+        /**
+         * Membuat tekstur papan kayu artistik alami dengan serat & sambungan papan
+         */
+        function createArtisticWoodTexture() {
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Base kayu jati / walnut hangat
+            const baseGrad = ctx.createLinearGradient(0, 0, size, size);
+            baseGrad.addColorStop(0, '#784826');
+            baseGrad.addColorStop(0.5, '#8c5630');
+            baseGrad.addColorStop(1, '#663a1c');
+            ctx.fillStyle = baseGrad;
+            ctx.fillRect(0, 0, size, size);
+
+            // Garis sambungan papan kayu artistik (4 bilah papan)
+            const planks = 4;
+            const plankH = size / planks;
+            for (let p = 0; p < planks; p++) {
+                const py = p * plankH;
+                // Variasi tone tiap bilah papan
+                ctx.fillStyle = p % 2 === 0 ? 'rgba(255, 220, 180, 0.05)' : 'rgba(35, 15, 5, 0.08)';
+                ctx.fillRect(0, py, size, plankH);
+
+                // Serat kayu melengkung organik
+                ctx.strokeStyle = 'rgba(42, 20, 8, 0.22)';
+                ctx.lineWidth = 1.4;
+                for (let s = 0; s < 22; s++) {
+                    const sy = py + (s / 22) * plankH;
+                    ctx.beginPath();
+                    for (let x = 0; x <= size; x += 16) {
+                        const wave = Math.sin(x * 0.02 + p * 2.1 + s * 0.5) * 3.5;
+                        if (x === 0) ctx.moveTo(x, sy + wave);
+                        else ctx.lineTo(x, sy + wave);
+                    }
+                    ctx.stroke();
+                }
+
+                // Alur sambungan antar papan
+                ctx.fillStyle = 'rgba(28, 12, 4, 0.55)';
+                ctx.fillRect(0, py, size, 2.5);
+                ctx.fillStyle = 'rgba(255, 210, 165, 0.14)';
+                ctx.fillRect(0, py + 2.5, size, 1.5);
+            }
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(2, 2);
+            tex.encoding = THREE.sRGBEncoding;
+            return tex;
+        }
+
+        function getSandHeightAt(x, z) {
+            if (!sandGeo) return POND.floorY;
+            return POND.floorY + (Math.sin(x * 0.35) * 0.35 + Math.cos(z * 0.4) * 0.3 + Math.sin((x + z) * 0.2) * 0.25);
+        }
+
+        function initThreeJSAquarium() {
+            scene = new THREE.Scene();
+            raycaster = new THREE.Raycaster();
+
+            scene.background = createFrutigerAeroOceanBackground();
+            scene.fog = new THREE.FogExp2(0x054663, 0.013);
+
+            camera = new THREE.PerspectiveCamera(
+                52,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                300
+            );
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 0.78;
+            if (renderer.outputColorSpace) {
+                renderer.outputColorSpace = THREE.SRGBColorSpace;
+            } else if (THREE.sRGBEncoding) {
+                renderer.outputEncoding = THREE.sRGBEncoding;
+            }
+            container3D.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 68;
+            controls.minDistance = 8;
+            controls.maxPolarAngle = Math.PI * 0.56;
+            controls.minPolarAngle = Math.PI * 0.08;
+            controls.target.set(0, -1.0, 0);
+
+            resetCameraPosition();
+
+            // Penataan Pencahayaan Kolam
+            const ambientLight = new THREE.AmbientLight(0xa3deef, 0.38);
+            scene.add(ambientLight);
+
+            const hemiLight = new THREE.HemisphereLight(0x7ad4e6, 0x264b5c, 0.52);
+            hemiLight.position.set(0, 22, 0);
+            scene.add(hemiLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffcf2, 0.72);
+            sunLight.position.set(16, 38, 18);
+            scene.add(sunLight);
+
+            const fillLight = new THREE.DirectionalLight(0x45b5c4, 0.32);
+            fillLight.position.set(-22, 18, -18);
+            scene.add(fillLight);
+
+            const coralPointLight1 = new THREE.PointLight(0xff479c, 0.45, 26);
+            coralPointLight1.position.set(-7, -2.5, -2);
+            scene.add(coralPointLight1);
+
+            const coralPointLight2 = new THREE.PointLight(0x26c6da, 0.45, 26);
+            coralPointLight2.position.set(7, -2.5, 2);
+            scene.add(coralPointLight2);
+
+            // Bangun elemen dunia akuarium
+            buildArtisticWoodenTray();
+            buildSandFloorWithCaustics();
+            buildTropicalSeashells();
+            buildWaterSurfaceAndSunbeams();
+            buildKawanishiH6KWreck();
+            buildHasselblad500CMCamera();
+            buildAbstractColorfulCorals();
+            buildSeaweedForest();
+            buildSeabedCritters();
+            buildPlanktonParticles();
+            buildDistantAeroSeaDecor();
+            buildGlassTankBounds();
+        }
+
+        // =========================================================================
+        // WADAH PAPAN KAYU ARTISTIK DI BAWAH KOLAM AKUARIUM
+        // =========================================================================
+        function buildArtisticWoodenTray() {
+            const trayGroup = new THREE.Group();
+            const woodTex = createArtisticWoodTexture();
+
+            const mainWoodMat = new THREE.MeshStandardMaterial({
+                map: woodTex,
+                color: 0xd99b66,
+                roughness: 0.46,
+                metalness: 0.06
+            });
+
+            const darkTrimWoodMat = new THREE.MeshStandardMaterial({
+                map: woodTex,
+                color: 0x7a4422,
+                roughness: 0.38,
+                metalness: 0.1
+            });
+
+            const brassInlayMat = new THREE.MeshStandardMaterial({
+                color: 0xd4af37,
+                roughness: 0.28,
+                metalness: 0.82
+            });
+
+            const baseW = POND.width + 2.4;
+            const baseD = POND.depth + 2.4;
+            const baseY = POND.floorY - 0.65;
+
+            // 1. Alas Papan Kayu Utama Tebal dengan Bevel Artistik
+            const trayShape = new THREE.Shape();
+            const hw = baseW / 2;
+            const hd = baseD / 2;
+            const cornerR = 1.1;
+
+            trayShape.moveTo(-hw + cornerR, -hd);
+            trayShape.lineTo(hw - cornerR, -hd);
+            trayShape.quadraticCurveTo(hw, -hd, hw, -hd + cornerR);
+            trayShape.lineTo(hw, hd - cornerR);
+            trayShape.quadraticCurveTo(hw, hd, hw - cornerR, hd);
+            trayShape.lineTo(-hw + cornerR, hd);
+            trayShape.quadraticCurveTo(-hw, hd, -hw, hd - cornerR);
+            trayShape.lineTo(-hw, -hd + cornerR);
+            trayShape.quadraticCurveTo(-hw, -hd, -hw + cornerR, -hd);
+
+            const extrudeSettings = {
+                depth: 0.65,
+                bevelEnabled: true,
+                bevelSegments: 4,
+                steps: 1,
+                bevelSize: 0.22,
+                bevelThickness: 0.18
+            };
+
+            const baseGeo = new THREE.ExtrudeGeometry(trayShape, extrudeSettings);
+            baseGeo.rotateX(Math.PI / 2);
+            const baseMesh = new THREE.Mesh(baseGeo, mainWoodMat);
+            baseMesh.position.y = baseY;
+            trayGroup.add(baseMesh);
+
+            // 2. Bingkai Bibir Wadah Kayu Mengelilingi Tepian Kolam (Tray Rim)
+            const rimH = 0.68;
+            const rimThick = 0.62;
+            const rimY = POND.floorY - 0.22;
+
+            // Sisi Depan & Belakang
+            [-1, 1].forEach(sideZ => {
+                const fbRim = new THREE.Mesh(new THREE.BoxGeometry(baseW + 0.1, rimH, rimThick), darkTrimWoodMat);
+                fbRim.position.set(0, rimY, sideZ * (hd - rimThick / 2 + 0.08));
+                trayGroup.add(fbRim);
+
+                // Lis Inlay Kuningan Artistik pada Bibir Depan/Belakang
+                const brassStrip = new THREE.Mesh(new THREE.BoxGeometry(baseW - 1.2, 0.07, 0.06), brassInlayMat);
+                brassStrip.position.set(0, rimY + 0.12, sideZ * (hd + 0.09));
+                trayGroup.add(brassStrip);
+            });
+
+            // Sisi Kiri & Kanan
+            [-1, 1].forEach(sideX => {
+                const lrRim = new THREE.Mesh(new THREE.BoxGeometry(rimThick, rimH, baseD - rimThick * 1.6), darkTrimWoodMat);
+                lrRim.position.set(sideX * (hw - rimThick / 2 + 0.08), rimY, 0);
+                trayGroup.add(lrRim);
+
+                // Lis Inlay Kuningan Artistik pada Bibir Kiri/Kanan
+                const brassStripSide = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.07, baseD - 1.4), brassInlayMat);
+                brassStripSide.position.set(sideX * (hw + 0.09), rimY + 0.12, 0);
+                trayGroup.add(brassStripSide);
+            });
+
+            // 3. Ornamen Sudut Kuningan Artistik (Corner Brackets)
+            const cornerPositions = [
+                [-hw + 0.12, -hd + 0.12],
+                [hw - 0.12, -hd + 0.12],
+                [-hw + 0.12, hd - 0.12],
+                [hw - 0.12, hd - 0.12]
+            ];
+            cornerPositions.forEach(([cx, cz]) => {
+                const cornerCap = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, rimH + 0.08, 16), brassInlayMat);
+                cornerCap.position.set(cx, rimY, cz);
+                trayGroup.add(cornerCap);
+            });
+
+            // 4. Kaki-kaki Penyangga Kayu Melengkung di Bawah Wadah
+            const footPositions = [
+                [-hw + 2.2, -hd + 1.8],
+                [hw - 2.2, -hd + 1.8],
+                [-hw + 2.2, hd - 1.8],
+                [hw - 2.2, hd - 1.8]
+            ];
+            footPositions.forEach(([fx, fz]) => {
+                const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.55, 0.55, 16), darkTrimWoodMat);
+                foot.position.set(fx, baseY - 0.85, fz);
+                trayGroup.add(foot);
+            });
+
+            scene.add(trayGroup);
+        }
+
+        // =========================================================================
+        // MODEL 3D PESAWAT FLYING BOAT KAWANISHI H6K ("MAVIS") TENGGELAM
+        // (BERDASARKAN GAMBAR PROFIL SAMPING IJN KEA-03 / 801-904)
+        // =========================================================================
+        function buildKawanishiH6KWreck() {
+            const planeGroup = new THREE.Group();
+
+            // Material Pesawat H6K IJN (IJN Dark Green Atas, Light Grey Bawah, Hinomaru Merah, Kanopi Kaca)
+            const ijnGreenMat = new THREE.MeshStandardMaterial({ color: 0x1e4a2b, roughness: 0.72, metalness: 0.25 });
+            const ijnDarkGreenMat = new THREE.MeshStandardMaterial({ color: 0x15361f, roughness: 0.78, metalness: 0.2 });
+            const ijnGreyBottomMat = new THREE.MeshStandardMaterial({ color: 0x9aa6a8, roughness: 0.68, metalness: 0.3 });
+            const hinomaruRedMat = new THREE.MeshStandardMaterial({ color: 0xc9221c, roughness: 0.55, metalness: 0.1 });
+            const whiteStripeMat = new THREE.MeshStandardMaterial({ color: 0xeef2f3, roughness: 0.5 });
+            const canopyGlassMat = new THREE.MeshPhysicalMaterial({
+                color: 0x76c7d4, transparent: true, opacity: 0.65, roughness: 0.15, metalness: 0.2
+            });
+            const propMetalMat = new THREE.MeshStandardMaterial({ color: 0x3b281e, roughness: 0.45, metalness: 0.65 });
+            const rustAlgaeMat = new THREE.MeshStandardMaterial({ color: 0x2d4d2c, roughness: 0.92 });
+
+            // 1. Lambung Flying Boat (Boat Hull Fuselage dengan Planing Step di Bawah)
+            // Bagian Utama Badan Pesawat
+            const fuselageLen = 7.4;
+            const fuselageGeo = new THREE.CylinderGeometry(0.46, 0.58, fuselageLen, 18);
+            fuselageGeo.rotateZ(Math.PI / 2);
+            const fuselageMesh = new THREE.Mesh(fuselageGeo, ijnGreenMat);
+            fuselageMesh.scale.set(1.0, 1.18, 0.88);
+            fuselageMesh.position.set(0, 0.85, 0);
+            planeGroup.add(fuselageMesh);
+
+            // Lunas Perahu Bawah (Flying Boat Hull Keel - Abu-abu IJN)
+            const keelShape = new THREE.Shape();
+            keelShape.moveTo(-3.6, 0.45);
+            keelShape.quadraticCurveTo(-2.4, 0.02, -0.3, 0.0); // Langkah Hidrodinamis (Planing Step)
+            keelShape.lineTo(-0.3, 0.14);
+            keelShape.lineTo(3.4, 0.42);
+            keelShape.lineTo(3.4, 0.68);
+            keelShape.lineTo(-3.6, 0.68);
+            keelShape.closePath();
+
+            const keelExtrude = { depth: 0.72, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.12, bevelThickness: 0.12 };
+            const keelGeo = new THREE.ExtrudeGeometry(keelShape, keelExtrude);
+            keelGeo.translate(0, 0, -0.36);
+            const keelMesh = new THREE.Mesh(keelGeo, ijnGreyBottomMat);
+            planeGroup.add(keelMesh);
+
+            // Hidung Pesawat & Kubah Kaca Penembak Depan (Nose Turret)
+            const noseCone = new THREE.Mesh(new THREE.SphereGeometry(0.52, 16, 14), ijnGreenMat);
+            noseCone.scale.set(1.35, 1.05, 0.88);
+            noseCone.position.set(-3.65, 0.82, 0);
+            planeGroup.add(noseCone);
+
+            const noseGlass = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 12), canopyGlassMat);
+            noseGlass.position.set(-4.22, 0.82, 0);
+            planeGroup.add(noseGlass);
+
+            // Kokpit Kaca Bertingkat Khas H6K
+            const cockpitGeo = new THREE.BoxGeometry(1.15, 0.34, 0.66);
+            const cockpitMesh = new THREE.Mesh(cockpitGeo, canopyGlassMat);
+            cockpitMesh.position.set(-2.35, 1.38, 0);
+            cockpitMesh.rotation.z = 0.14;
+            planeGroup.add(cockpitMesh);
+
+            // Kubah Penembak Punggung (Dorsal Turret Blister) & Kubah Ekor
+            const dorsalTurret = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 10, 0, Math.PI * 2, 0, Math.PI / 2), canopyGlassMat);
+            dorsalTurret.position.set(1.1, 1.42, 0);
+            planeGroup.add(dorsalTurret);
+
+            const tailTurret = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.42, 12), canopyGlassMat);
+            tailTurret.rotation.z = Math.PI / 2;
+            tailTurret.position.set(3.75, 0.92, 0);
+            planeGroup.add(tailTurret);
+
+            // Lambang Hinomaru (Lingkaran Merah Jepang) di Kedua Sisi Badan Pesawat
+            [-1, 1].forEach(sideZ => {
+                const hinomaruWhite = new THREE.Mesh(new THREE.CircleGeometry(0.46, 24), whiteStripeMat);
+                hinomaruWhite.position.set(0.95, 0.86, sideZ * 0.52);
+                if (sideZ < 0) hinomaruWhite.rotation.y = Math.PI;
+
+                const hinomaruRed = new THREE.Mesh(new THREE.CircleGeometry(0.43, 24), hinomaruRedMat);
+                hinomaruRed.position.set(0.95, 0.86, sideZ * 0.525);
+                if (sideZ < 0) hinomaruRed.rotation.y = Math.PI;
+
+                planeGroup.add(hinomaruWhite, hinomaruRed);
+            });
+
+            // 2. Sayap Parasol Lebar di Atas Badan Pesawat + Strut Penopang Khas H6K
+            const wingSpan = 9.6;
+            const wingGeo = new THREE.BoxGeometry(1.45, 0.14, wingSpan);
+            const wingMesh = new THREE.Mesh(wingGeo, ijnGreenMat);
+            wingMesh.position.set(-0.95, 1.88, 0);
+            planeGroup.add(wingMesh);
+
+            // Ujung Sayap Membulat (Wingtips) & Hinomaru Sayap
+            [-1, 1].forEach(sideZ => {
+                const wingTip = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.12, 16), ijnGreenMat);
+                wingTip.scale.set(1.0, 1.0, 0.65);
+                wingTip.position.set(-0.95, 1.88, sideZ * (wingSpan / 2));
+                planeGroup.add(wingTip);
+
+                const wingHinomaru = new THREE.Mesh(new THREE.CircleGeometry(0.48, 20), hinomaruRedMat);
+                wingHinomaru.rotation.x = -Math.PI / 2;
+                wingHinomaru.position.set(-0.95, 1.96, sideZ * 3.6);
+                planeGroup.add(wingHinomaru);
+
+                // Strut Penopang Parasol Wing ke Badan Pesawat
+                const strut1 = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.85, 6), ijnGreyBottomMat);
+                strut1.position.set(-1.15, 1.48, sideZ * 0.65);
+                strut1.rotation.x = sideZ * 0.55;
+
+                const strut2 = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.85, 6), ijnGreyBottomMat);
+                strut2.position.set(-0.65, 1.48, sideZ * 0.65);
+                strut2.rotation.x = sideZ * 0.55;
+
+                planeGroup.add(strut1, strut2);
+
+                // Pelampung Stabilizer Bawah Sayap (Outrigger Wing Floats)
+                const floatBody = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 1.55, 12), ijnGreenMat);
+                floatBody.rotation.z = Math.PI / 2;
+                floatBody.scale.set(1.1, 1.0, 0.85);
+                floatBody.position.set(-1.05, 0.82, sideZ * 3.25);
+
+                const floatNose = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), ijnGreenMat);
+                floatNose.scale.set(1.6, 1.0, 0.85);
+                floatNose.position.set(-1.82, 0.82, sideZ * 3.25);
+
+                const floatStrutA = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.05, 6), ijnGreyBottomMat);
+                floatStrutA.position.set(-1.25, 1.35, sideZ * 3.25);
+                const floatStrutB = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.05, 6), ijnGreyBottomMat);
+                floatStrutB.position.set(-0.75, 1.35, sideZ * 3.25);
+
+                planeGroup.add(floatBody, floatNose, floatStrutA, floatStrutB);
+            });
+
+            // 3. Empat Mesin Bintang (4x Mitsubishi Kinsei Radial Engines + Baling-Baling 3 Bilah)
+            const engineZOffsets = [-2.35, -1.05, 1.05, 2.35];
+            engineZOffsets.forEach((zOff, idx) => {
+                const nacelle = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.22, 0.85, 14), ijnDarkGreenMat);
+                nacelle.rotation.z = Math.PI / 2;
+                nacelle.position.set(-1.62, 1.88, zOff);
+                planeGroup.add(nacelle);
+
+                // Baling-baling 3 Bilah (Sebagian bengkok karena karam)
+                const propGroup = new THREE.Group();
+                propGroup.position.set(-2.08, 1.88, zOff);
+                const spinner = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.18, 10), propMetalMat);
+                spinner.rotation.z = Math.PI / 2;
+                propGroup.add(spinner);
+
+                for (let b = 0; b < 3; b++) {
+                    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.42, 0.07), propMetalMat);
+                    const angle = (b / 3) * Math.PI * 2 + idx * 0.5;
+                    blade.position.set(0, Math.cos(angle) * 0.2, Math.sin(angle) * 0.2);
+                    blade.rotation.x = angle;
+                    // Efek baling-baling bengkok ringan akibat benturan dasar laut
+                    if (idx === 1 && b === 2) blade.rotation.z = 0.42;
+                    propGroup.add(blade);
+                }
+                planeGroup.add(propGroup);
+            });
+
+            // 4. Ekor Tegak Tinggi & Stabilizer Horizontal dengan Garis Merah-Putih (KEA-03)
+            const tailFinShape = new THREE.Shape();
+            tailFinShape.moveTo(2.4, 1.15);
+            tailFinShape.lineTo(3.55, 1.15);
+            tailFinShape.lineTo(3.38, 2.55);
+            tailFinShape.quadraticCurveTo(3.15, 2.75, 2.95, 2.55);
+            tailFinShape.closePath();
+
+            const tailFinGeo = new THREE.ExtrudeGeometry(tailFinShape, { depth: 0.08, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.02, bevelThickness: 0.02 });
+            tailFinGeo.translate(0, 0, -0.04);
+            const tailFinMesh = new THREE.Mesh(tailFinGeo, ijnGreenMat);
+            planeGroup.add(tailFinMesh);
+
+            // Garis Diagonal Merah-Putih Khas Skuadron 901 (KEA-03) di Ekor
+            const stripeWhite = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.14, 0.14), whiteStripeMat);
+            stripeWhite.position.set(3.12, 2.02, 0);
+            stripeWhite.rotation.z = -0.78;
+            const stripeRed = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.08, 0.15), hinomaruRedMat);
+            stripeRed.position.set(3.12, 2.02, 0);
+            stripeRed.rotation.z = -0.78;
+            planeGroup.add(stripeWhite, stripeRed);
+
+            // Stabilizer Horizontal Ekor
+            const hStab = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.08, 3.1), ijnGreenMat);
+            hStab.position.set(3.15, 1.32, 0);
+            planeGroup.add(hStab);
+
+            // Lumut Laut Alami pada Badan Pesawat Karam
+            const mossPatch = new THREE.Mesh(new THREE.DodecahedronGeometry(0.45, 1), rustAlgaeMat);
+            mossPatch.scale.set(1.6, 0.35, 0.9);
+            mossPatch.position.set(-1.4, 0.55, 0.42);
+            planeGroup.add(mossPatch);
+
+            // Penempatan Pesawat H6K di Dasar Pasir Tropis (miring karam alami)
+            const posX = -4.6;
+            const posZ = 1.5;
+            const posY = getSandHeightAt(posX, posZ) - 0.1;
+
+            planeGroup.position.set(posX, posY, posZ);
+            planeGroup.rotation.set(0.18, 0.52, -0.14);
+            scene.add(planeGroup);
+        }
+
+        // =========================================================================
+        // MODEL 3D KAMERA MEDIUM FORMAT HASSELBLAD 500 C/M
+        // (BERDASARKAN GAMBAR REFERENSI: WAIST-LEVEL FINDER TERBUKA, LENS PLANAR 80mm, CRANK)
+        // =========================================================================
+        function buildHasselblad500CMCamera() {
+            const hasselGroup = new THREE.Group();
+
+            // Material Khas Hasselblad 500 C/M: Chrome Kilap, Kulit Hitam Bertekstur, Optik Lensa Carl Zeiss
+            const chromeMat = new THREE.MeshStandardMaterial({ color: 0xe6edf2, roughness: 0.18, metalness: 0.92 });
+            const satinChromeMat = new THREE.MeshStandardMaterial({ color: 0xbac4cc, roughness: 0.32, metalness: 0.85 });
+            const blackLeatherMat = new THREE.MeshStandardMaterial({ color: 0x181a1c, roughness: 0.88, metalness: 0.05 });
+            const blackAnodizedMat = new THREE.MeshStandardMaterial({ color: 0x121417, roughness: 0.42, metalness: 0.65 });
+            const zeissGlassMat = new THREE.MeshPhysicalMaterial({
+                color: 0x164a66,
+                emissive: 0x062233,
+                emissiveIntensity: 0.25,
+                transparent: true,
+                opacity: 0.82,
+                roughness: 0.06,
+                metalness: 0.15,
+                clearcoat: 1.0
+            });
+
+            // 1. Bodi Utama Kubus Hasselblad + Trim Chrome Pinggiran Khas
+            const mainBody = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.05, 1.15), blackLeatherMat);
+            mainBody.position.set(0, 0.55, 0.1);
+            hasselGroup.add(mainBody);
+
+            // Bingkai Chrome Sekeliling Bodi Tengah
+            const bodyChromeFrame = new THREE.Mesh(new THREE.BoxGeometry(1.09, 1.09, 0.06), chromeMat);
+            bodyChromeFrame.position.set(0, 0.55, 0.66);
+            const midChromeRing = new THREE.Mesh(new THREE.BoxGeometry(1.09, 1.09, 0.05), chromeMat);
+            midChromeRing.position.set(0, 0.55, -0.15);
+            hasselGroup.add(bodyChromeFrame, midChromeRing);
+
+            // 2. Film Magazine A12 di Bagian Belakang (dengan Winding Crank / Kunci Pemutar)
+            const filmBack = new THREE.Mesh(new THREE.BoxGeometry(1.02, 1.02, 0.48), blackLeatherMat);
+            filmBack.position.set(0, 0.55, -0.44);
+            const backChromeEdge = new THREE.Mesh(new THREE.BoxGeometry(1.06, 1.06, 0.05), chromeMat);
+            backChromeEdge.position.set(0, 0.55, -0.68);
+            hasselGroup.add(filmBack, backChromeEdge);
+
+            // Film Magazine Winding Key di Sisi Kanan Belakang (seperti pada foto referensi)
+            const keyBase = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.06, 20), chromeMat);
+            keyBase.rotation.z = Math.PI / 2;
+            keyBase.position.set(0.54, 0.52, -0.46);
+            const keyHandle = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.09, 0.24), blackAnodizedMat);
+            keyHandle.position.set(0.58, 0.52, -0.52);
+            hasselGroup.add(keyBase, keyHandle);
+
+            // 3. Knob Pemutar Film Besar Khas Hasselblad di Sisi Kanan Bodi
+            const mainWindingKnobOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.14, 28), chromeMat);
+            mainWindingKnobOuter.rotation.z = Math.PI / 2;
+            mainWindingKnobOuter.position.set(0.57, 0.54, 0.14);
+
+            const mainWindingKnobInner = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.16, 24), blackLeatherMat);
+            mainWindingKnobInner.rotation.z = Math.PI / 2;
+            mainWindingKnobInner.position.set(0.57, 0.54, 0.14);
+            hasselGroup.add(mainWindingKnobOuter, mainWindingKnobInner);
+
+            // Tombol Shutter Release Chrome di Depan Bawah Kanan
+            const shutterMount = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.14, 14), chromeMat);
+            shutterMount.rotation.x = Math.PI / 2;
+            shutterMount.position.set(0.38, 0.18, 0.72);
+            const shutterPin = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.1, 12), satinChromeMat);
+            shutterPin.rotation.x = Math.PI / 2;
+            shutterPin.position.set(0.38, 0.18, 0.79);
+            hasselGroup.add(shutterMount, shutterPin);
+
+            // 4. Waist-Level Viewfinder Hood Terbuka di Bagian Atas (Ciri Khas Utama Foto!)
+            const hoodGroup = new THREE.Group();
+            hoodGroup.position.set(0, 1.1, 0.15);
+
+            // Alas Viewfinder Chrome (dengan tulisan HASSELBLAD di depan)
+            const hoodBase = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.1, 0.96), chromeMat);
+            hoodGroup.add(hoodBase);
+
+            // Layar Fokus Kaca Ground Glass di Dalam Hood
+            const groundGlass = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 0.82), zeissGlassMat);
+            groundGlass.rotation.x = -Math.PI / 2;
+            groundGlass.position.y = 0.055;
+            hoodGroup.add(groundGlass);
+
+            // Penutup Depan Hood Tegak Tinggi dengan Panel Kulit & Bingkai Chrome
+            const frontFlapFrame = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.86, 0.05), chromeMat);
+            frontFlapFrame.position.set(0, 0.45, 0.44);
+            frontFlapFrame.rotation.x = -0.14;
+            const frontFlapLeather = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.74, 0.06), blackLeatherMat);
+            frontFlapLeather.position.set(0, 0.45, 0.445);
+            frontFlapLeather.rotation.x = -0.14;
+            hoodGroup.add(frontFlapFrame, frontFlapLeather);
+
+            // Penutup Belakang Hood Tegak
+            const backFlap = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.72, 0.04), blackAnodizedMat);
+            backFlap.position.set(0, 0.38, -0.44);
+            backFlap.rotation.x = 0.12;
+            hoodGroup.add(backFlap);
+
+            // Sayap Samping Kiri & Kanan Hood Trapesium
+            [-1, 1].forEach(sideX => {
+                const sideFlap = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.68, 0.82), blackAnodizedMat);
+                sideFlap.position.set(sideX * 0.43, 0.36, 0);
+                sideFlap.rotation.z = sideX * 0.08;
+                hoodGroup.add(sideFlap);
+            });
+
+            hasselGroup.add(hoodGroup);
+
+            // 5. Lensa Carl Zeiss Planar 80mm f/2.8 Hitam dengan Ring Chrome & Optik Besar
+            const lensGroup = new THREE.Group();
+            lensGroup.position.set(0, 0.56, 0.68);
+
+            // Mount Chrome Lensa
+            const lensMount = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.44, 0.1, 28), chromeMat);
+            lensMount.rotation.x = Math.PI / 2;
+            lensMount.position.z = 0.05;
+            lensGroup.add(lensMount);
+
+            // Tabung Lensa Utama Hitam dengan Ring Fokus Bergerigi
+            const barrelRear = new THREE.Mesh(new THREE.CylinderGeometry(0.40, 0.41, 0.28, 32), blackAnodizedMat);
+            barrelRear.rotation.x = Math.PI / 2;
+            barrelRear.position.z = 0.22;
+            lensGroup.add(barrelRear);
+
+            // Cincin Chrome Pemisah Skala Jarak
+            const chromeRing = new THREE.Mesh(new THREE.CylinderGeometry(0.415, 0.415, 0.04, 32), chromeMat);
+            chromeRing.rotation.x = Math.PI / 2;
+            chromeRing.position.z = 0.36;
+            lensGroup.add(chromeRing);
+
+            // Tabung Lensa Depan (Filter Bayonet B50)
+            const barrelFront = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.39, 0.28, 32), blackAnodizedMat);
+            barrelFront.rotation.x = Math.PI / 2;
+            barrelFront.position.z = 0.51;
+            lensGroup.add(barrelFront);
+
+            // Elemen Kaca Lensa Besar Carl Zeiss Planar
+            const frontOptic = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.30, 0.06, 28), zeissGlassMat);
+            frontOptic.rotation.x = Math.PI / 2;
+            frontOptic.position.z = 0.64;
+            lensGroup.add(frontOptic);
+
+            hasselGroup.add(lensGroup);
+
+            // Penempatan Hasselblad 500 C/M di Dasar Pasir Tropis
+            const posX = 5.6;
+            const posZ = -2.0;
+            const posY = getSandHeightAt(posX, posZ) + 0.02;
+
+            hasselGroup.position.set(posX, posY, posZ);
+            hasselGroup.rotation.set(-0.08, -0.62, 0.14); // Tergeletak artistik menghadap agak ke depan
+            scene.add(hasselGroup);
+        }
+
+        // =========================================================================
+        // PASIR PANTAI TROPIS KREM & TABURAN KERANG LAUT 3D
+        // =========================================================================
+        function buildSandFloorWithCaustics() {
+            sandGeo = new THREE.PlaneGeometry(POND.width, POND.depth, 56, 44);
+            sandGeo.rotateX(-Math.PI / 2);
+
+            const pos = sandGeo.attributes.position;
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const z = pos.getZ(i);
+                const wave = Math.sin(x * 0.35) * 0.35 + Math.cos(z * 0.4) * 0.3 + Math.sin((x + z) * 0.2) * 0.25;
+                pos.setY(i, wave);
+            }
+            sandGeo.computeVertexNormals();
+
+            const tropicalSandTex = createTropicalSandTexture();
+
+            // Pasir Pantai Tropis Krem Lembut Cerah
+            const sandMat = new THREE.MeshStandardMaterial({
+                map: tropicalSandTex,
+                color: 0xf7ebd2,
+                roughness: 0.84,
+                metalness: 0.02
+            });
+
+            sandMesh = new THREE.Mesh(sandGeo, sandMat);
+            sandMesh.position.y = POND.floorY;
+            scene.add(sandMesh);
+
+            causticTexture = createCausticTexture();
+            const causticMat = new THREE.MeshBasicMaterial({
+                map: causticTexture,
+                transparent: true,
+                opacity: 0.22,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            const causticMesh = new THREE.Mesh(sandGeo, causticMat);
+            causticMesh.position.y = POND.floorY + 0.06;
+            scene.add(causticMesh);
+        }
+
+        /**
+         * Membuat sedikit kerang tropis (Scallop Shell & Spiral Conch Shell) tersebar alami di pasir
+         */
+        function buildTropicalSeashells() {
+            const shellColors = [0xfff5e4, 0xfad4c0, 0xf7b2ad, 0xffe5b4, 0xe8d5c4];
+
+            // 1. Kerang Kipas Tropis (Scallop Shells - 9 buah)
+            for (let i = 0; i < 9; i++) {
+                let sx, sz, attempts = 0;
+                do {
+                    sx = (Math.random() - 0.5) * (POND.width - 3.5);
+                    sz = (Math.random() - 0.5) * (POND.depth - 3.5);
+                    attempts++;
+                } while (isInsideProtectedZone(sx, sz, 0.3) && attempts < 30);
+
+                if (attempts >= 30) continue;
+
+                const shellGroup = new THREE.Group();
+                const col = shellColors[i % shellColors.length];
+                const shellMat = new THREE.MeshPhysicalMaterial({
+                    color: col,
+                    roughness: 0.28,
+                    clearcoat: 0.65,
+                    side: THREE.DoubleSide
+                });
+
+                // Geometri Cangkang Kipas Bergelombang
+                const radius = 0.24 + Math.random() * 0.14;
+                const scallopGeo = new THREE.CircleGeometry(radius, 18, 0, Math.PI * 1.15);
+                scallopGeo.rotateX(-Math.PI / 2);
+
+                const pos = scallopGeo.attributes.position;
+                for (let v = 0; v < pos.count; v++) {
+                    const vx = pos.getX(v);
+                    const vz = pos.getZ(v);
+                    const dist = Math.hypot(vx, vz);
+                    const ang = Math.atan2(vz, vx);
+                    // Lengkungan cangkang + alur rusuk kipas
+                    const dome = Math.sin((dist / radius) * Math.PI) * 0.08;
+                    const ridges = Math.sin(ang * 14) * 0.015 * (dist / radius);
+                    pos.setY(v, dome + ridges);
+                }
+                scallopGeo.computeVertexNormals();
+
+                const scallopMesh = new THREE.Mesh(scallopGeo, shellMat);
+                shellGroup.add(scallopMesh);
+
+                // Engsel kecil pangkal kerang
+                const hinge = new THREE.Mesh(new THREE.BoxGeometry(radius * 0.5, 0.04, 0.06), shellMat);
+                shellGroup.add(hinge);
+
+                shellGroup.position.set(sx, getSandHeightAt(sx, sz) + 0.04, sz);
+                shellGroup.rotation.set(
+                    (Math.random() - 0.5) * 0.25,
+                    Math.random() * Math.PI * 2,
+                    (Math.random() - 0.5) * 0.25
+                );
+                scene.add(shellGroup);
+            }
+
+            // 2. Kerang Keong Spiral Tropis (Spiral Conch Shells - 6 buah)
+            for (let j = 0; j < 6; j++) {
+                let cx, cz, attempts = 0;
+                do {
+                    cx = (Math.random() - 0.5) * (POND.width - 3.5);
+                    cz = (Math.random() - 0.5) * (POND.depth - 3.5);
+                    attempts++;
+                } while (isInsideProtectedZone(cx, cz, 0.3) && attempts < 30);
+
+                if (attempts >= 30) continue;
+
+                const conchGroup = new THREE.Group();
+                const col = shellColors[(j + 2) % shellColors.length];
+                const conchMat = new THREE.MeshPhysicalMaterial({
+                    color: col,
+                    roughness: 0.26,
+                    clearcoat: 0.7
+                });
+
+                // 4 Ruas Spiral Mengerucut
+                const scale = 0.85 + Math.random() * 0.35;
+                for (let seg = 0; seg < 4; seg++) {
+                    const segR = (0.14 - seg * 0.026) * scale;
+                    const segGeo = new THREE.SphereGeometry(segR, 12, 10);
+                    segGeo.scale(1.2, 0.9, 1.0);
+                    const segMesh = new THREE.Mesh(segGeo, conchMat);
+                    segMesh.position.set(seg * 0.11 * scale, segR * 0.75, 0);
+                    conchGroup.add(segMesh);
+                }
+
+                conchGroup.position.set(cx, getSandHeightAt(cx, cz) + 0.03, cz);
+                conchGroup.rotation.set(
+                    (Math.random() - 0.5) * 0.2,
+                    Math.random() * Math.PI * 2,
+                    (Math.random() - 0.5) * 0.2
+                );
+                scene.add(conchGroup);
+            }
+        }
+
+        function buildWaterSurfaceAndSunbeams() {
+            surfaceGeo = new THREE.PlaneGeometry(POND.width, POND.depth, 48, 36);
+            surfaceGeo.rotateX(Math.PI / 2);
+            surfaceOrigPositions = Float32Array.from(surfaceGeo.attributes.position.array);
+
+            const surfMat = new THREE.MeshPhysicalMaterial({
+                color: 0x5ce6f5,
+                emissive: 0x004c70,
+                emissiveIntensity: 0.16,
+                transparent: true,
+                opacity: 0.36,
+                roughness: 0.14,
+                metalness: 0.08,
+                clearcoat: 0.85,
+                side: THREE.DoubleSide
+            });
+            const surfaceMesh = new THREE.Mesh(surfaceGeo, surfMat);
+            surfaceMesh.position.y = POND.surfaceY;
+            scene.add(surfaceMesh);
+
+            const beamMat = new THREE.MeshBasicMaterial({
+                color: 0xaef6ff,
+                transparent: true,
+                opacity: 0.045,
+                blending: THREE.AdditiveBlending,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+
+            for (let i = 0; i < 7; i++) {
+                const topR = 0.7 + Math.random() * 0.7;
+                const botR = 3.0 + Math.random() * 1.6;
+                const beamGeo = new THREE.CylinderGeometry(topR, botR, POND.height + 2, 16, 1, true);
+                const beam = new THREE.Mesh(beamGeo, beamMat);
+
+                beam.position.set(
+                    (Math.random() - 0.5) * (POND.width * 0.72),
+                    0.4,
+                    (Math.random() - 0.5) * (POND.depth * 0.62)
+                );
+                beam.rotation.z = (Math.random() - 0.5) * 0.2;
+                beam.rotation.x = (Math.random() - 0.5) * 0.16;
+                scene.add(beam);
+                sunBeams.push({ mesh: beam, baseRotZ: beam.rotation.z, phase: Math.random() * Math.PI * 2 });
+            }
+        }
+
+        function buildDistantAeroSeaDecor() {
+            bgBubblesGroup = new THREE.Group();
+            const orbMat = new THREE.MeshPhysicalMaterial({
+                color: 0xaef8ff,
+                transparent: true,
+                opacity: 0.16,
+                roughness: 0.06,
+                metalness: 0.08,
+                clearcoat: 1.0
+            });
+
+            const orbCount = 12;
+            for (let i = 0; i < orbCount; i++) {
+                const radius = 0.7 + (i % 3) * 0.45;
+                const orb = new THREE.Mesh(new THREE.SphereGeometry(radius, 18, 18), orbMat);
+                const angle = (i / orbCount) * Math.PI * 2;
+                const dist = 28 + (i % 2) * 8;
+                orb.position.set(
+                    Math.cos(angle) * dist,
+                    -3 + (i % 4) * 3.5,
+                    Math.sin(angle) * dist
+                );
+                orb.userData = {
+                    baseY: orb.position.y,
+                    speed: 0.35 + (i % 3) * 0.15,
+                    phase: i * 0.8
+                };
+                bgBubblesGroup.add(orb);
+            }
+            scene.add(bgBubblesGroup);
+        }
+
+        function buildAbstractColorfulCorals() {
+            const aeroCoralPalette = [
+                0xff2e93, 0x00d4f5, 0x64dd17, 0xff6d00, 
+                0xa67cff, 0xf5d000, 0xff4081, 0x1de9b6
+            ];
+
+            const pickColor = (offset = 0) => aeroCoralPalette[(Math.floor(Math.random() * aeroCoralPalette.length) + offset) % aeroCoralPalette.length];
+
+            const rockMat = new THREE.MeshStandardMaterial({ color: 0x5c7c8a, roughness: 0.78 });
+            for (let i = 0; i < 11; i++) {
+                let rx, rz, attempts = 0;
+                do {
+                    rx = (Math.random() - 0.5) * (POND.width - 4);
+                    rz = (Math.random() - 0.5) * (POND.depth - 4);
+                    attempts++;
+                } while (isInsideProtectedZone(rx, rz, 1.2) && attempts < 40);
+
+                if (attempts >= 40) continue;
+
+                const rockGeo = new THREE.DodecahedronGeometry(0.75 + Math.random() * 1.15, 1);
+                const rock = new THREE.Mesh(rockGeo, rockMat);
+                rock.scale.set(1.35, 0.68, 1.15);
+                rock.position.set(rx, getSandHeightAt(rx, rz) + 0.15, rz);
+                rock.rotation.y = Math.random() * Math.PI;
+                scene.add(rock);
+            }
+
+            for (let b = 0; b < 6; b++) {
+                let cx, cz, attempts = 0;
+                do {
+                    cx = (Math.random() - 0.5) * (POND.width - 5);
+                    cz = (Math.random() - 0.5) * (POND.depth - 5);
+                    attempts++;
+                } while (isInsideProtectedZone(cx, cz, 1.5) && attempts < 40);
+
+                if (attempts >= 40) continue;
+
+                const radius = 0.85 + Math.random() * 0.6;
+                const brainGeo = new THREE.IcosahedronGeometry(radius, 3);
+                const pos = brainGeo.attributes.position;
+
+                for (let v = 0; v < pos.count; v++) {
+                    const vx = pos.getX(v);
+                    const vy = pos.getY(v);
+                    const vz = pos.getZ(v);
+                    const ridge = Math.sin(vx * 7.5 + b) * Math.cos(vy * 7.5) * Math.sin(vz * 7.5) * 0.16;
+                    const len = Math.hypot(vx, vy, vz) || 1;
+                    pos.setXYZ(
+                        v,
+                        vx + (vx / len) * ridge,
+                        Math.max(-radius * 0.35, vy + (vy / len) * ridge),
+                        vz + (vz / len) * ridge
+                    );
+                }
+                brainGeo.computeVertexNormals();
+
+                const col = pickColor(b);
+                const brainMat = new THREE.MeshPhysicalMaterial({
+                    color: col,
+                    emissive: col,
+                    emissiveIntensity: 0.08,
+                    roughness: 0.36,
+                    clearcoat: 0.45
+                });
+                const brainMesh = new THREE.Mesh(brainGeo, brainMat);
+                brainMesh.position.set(cx, getSandHeightAt(cx, cz) + radius * 0.32, cz);
+                scene.add(brainMesh);
+            }
+
+            for (let s = 0; s < 9; s++) {
+                let cx, cz, attempts = 0;
+                do {
+                    cx = (Math.random() - 0.5) * (POND.width - 5);
+                    cz = (Math.random() - 0.5) * (POND.depth - 5);
+                    attempts++;
+                } while (isInsideProtectedZone(cx, cz, 1.5) && attempts < 40);
+
+                if (attempts >= 40) continue;
+
+                const group = new THREE.Group();
+                const baseCol = pickColor(s * 2);
+
+                const armCount = 4 + Math.floor(Math.random() * 4);
+                for (let a = 0; a < armCount; a++) {
+                    const points = [];
+                    const angleOffset = (a / armCount) * Math.PI * 2;
+                    const height = 1.6 + Math.random() * 1.8;
+                    const spiralTwist = (Math.random() - 0.5) * 1.6;
+
+                    for (let step = 0; step <= 6; step++) {
+                        const t = step / 6;
+                        const spread = Math.sin(t * Math.PI * 0.75) * (0.7 + a * 0.12);
+                        const px = Math.cos(angleOffset + t * spiralTwist) * spread;
+                        const pz = Math.sin(angleOffset + t * spiralTwist) * spread;
+                        const py = t * height;
+                        points.push(new THREE.Vector3(px, py, pz));
+                    }
+
+                    const curve = new THREE.CatmullRomCurve3(points);
+                    const tubeGeo = new THREE.TubeGeometry(curve, 14, 0.13 - a * 0.008, 8, false);
+                    const armCol = a % 2 === 0 ? baseCol : pickColor(s + a);
+                    const armMat = new THREE.MeshPhysicalMaterial({
+                        color: armCol,
+                        emissive: armCol,
+                        emissiveIntensity: 0.08,
+                        roughness: 0.32,
+                        clearcoat: 0.5
+                    });
+                    const armMesh = new THREE.Mesh(tubeGeo, armMat);
+                    group.add(armMesh);
+
+                    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), armMat);
+                    tip.position.copy(points[points.length - 1]);
+                    group.add(tip);
+                }
+
+                group.position.set(cx, getSandHeightAt(cx, cz) - 0.08, cz);
+                scene.add(group);
+            }
+
+            for (let p = 0; p < 6; p++) {
+                let cx, cz, attempts = 0;
+                do {
+                    cx = (Math.random() - 0.5) * (POND.width - 5);
+                    cz = (Math.random() - 0.5) * (POND.depth - 5);
+                    attempts++;
+                } while (isInsideProtectedZone(cx, cz, 1.5) && attempts < 40);
+
+                if (attempts >= 40) continue;
+
+                const group = new THREE.Group();
+                const tiers = 3 + Math.floor(Math.random() * 3);
+
+                for (let t = 0; t < tiers; t++) {
+                    const plateR = 0.65 + Math.random() * 0.7;
+                    const plateGeo = new THREE.CylinderGeometry(plateR, plateR * 0.35, 0.22, 18);
+                    const pPos = plateGeo.attributes.position;
+                    for (let v = 0; v < pPos.count; v++) {
+                        const vx = pPos.getX(v);
+                        const vz = pPos.getZ(v);
+                        const ang = Math.atan2(vz, vx);
+                        pPos.setY(v, pPos.getY(v) + Math.sin(ang * 6 + t) * 0.06);
+                    }
+                    plateGeo.computeVertexNormals();
+
+                    const col = pickColor(p + t);
+                    const plateMat = new THREE.MeshPhysicalMaterial({
+                        color: col,
+                        emissive: col,
+                        emissiveIntensity: 0.07,
+                        roughness: 0.35,
+                        clearcoat: 0.45
+                    });
+
+                    const plate = new THREE.Mesh(plateGeo, plateMat);
+                    plate.position.set(
+                        (Math.random() - 0.5) * 0.9,
+                        0.45 + t * 0.48,
+                        (Math.random() - 0.5) * 0.9
+                    );
+                    plate.rotation.set((Math.random() - 0.5) * 0.25, Math.random() * Math.PI, (Math.random() - 0.5) * 0.25);
+                    group.add(plate);
+                }
+
+                group.position.set(cx, getSandHeightAt(cx, cz) - 0.05, cz);
+                scene.add(group);
+            }
+
+            for (let f = 0; f < 6; f++) {
+                let cx, cz, attempts = 0;
+                do {
+                    cx = (Math.random() - 0.5) * (POND.width - 5);
+                    cz = (Math.random() - 0.5) * (POND.depth - 5);
+                    attempts++;
+                } while (isInsideProtectedZone(cx, cz, 1.5) && attempts < 40);
+
+                if (attempts >= 40) continue;
+
+                const group = new THREE.Group();
+                const fanCol = pickColor(f * 3);
+                const fanMat = new THREE.MeshStandardMaterial({
+                    color: fanCol,
+                    emissive: fanCol,
+                    emissiveIntensity: 0.1,
+                    roughness: 0.4
+                });
+
+                const ribs = 7;
+                for (let r = 0; r < ribs; r++) {
+                    const spreadAngle = ((r / (ribs - 1)) - 0.5) * 1.45;
+                    const ribLen = 1.6 + Math.cos(spreadAngle) * 1.1;
+                    const curve = new THREE.CatmullRomCurve3([
+                        new THREE.Vector3(0, 0, 0),
+                        new THREE.Vector3(Math.sin(spreadAngle) * ribLen * 0.55, ribLen * 0.55, Math.sin(r) * 0.12),
+                        new THREE.Vector3(Math.sin(spreadAngle) * ribLen, ribLen, 0)
+                    ]);
+                    const ribMesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 10, 0.055, 6, false), fanMat);
+                    group.add(ribMesh);
+                }
+
+                group.position.set(cx, getSandHeightAt(cx, cz) - 0.05, cz);
+                group.rotation.y = Math.random() * Math.PI;
+                scene.add(group);
+            }
+
+            for (let a = 0; a < 7; a++) {
+                let cx, cz, attempts = 0;
+                do {
+                    cx = (Math.random() - 0.5) * (POND.width - 5);
+                    cz = (Math.random() - 0.5) * (POND.depth - 5);
+                    attempts++;
+                } while (isInsideProtectedZone(cx, cz, 1.5) && attempts < 40);
+
+                if (attempts >= 40) continue;
+
+                const group = new THREE.Group();
+                const bodyCol = pickColor(a);
+                const tipCol = pickColor(a + 3);
+
+                const baseMesh = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.45, 0.55, 0.45, 14),
+                    new THREE.MeshStandardMaterial({ color: bodyCol, roughness: 0.45 })
+                );
+                baseMesh.position.y = 0.22;
+                group.add(baseMesh);
+
+                const tentacles = [];
+                const tentacleMat = new THREE.MeshPhysicalMaterial({
+                    color: tipCol,
+                    emissive: tipCol,
+                    emissiveIntensity: 0.12,
+                    roughness: 0.3,
+                    clearcoat: 0.7
+                });
+
+                const tCount = 16;
+                for (let t = 0; t < tCount; t++) {
+                    const ring = t < 10 ? 0.34 : 0.18;
+                    const ang = (t / (t < 10 ? 10 : 6)) * Math.PI * 2;
+                    const th = 0.85 + Math.random() * 0.45;
+                    const tGeo = new THREE.CylinderGeometry(0.04, 0.08, th, 6);
+                    tGeo.translate(0, th / 2, 0);
+
+                    const tentacle = new THREE.Mesh(tGeo, tentacleMat);
+                    tentacle.position.set(Math.cos(ang) * ring, 0.38, Math.sin(ang) * ring);
+                    const baseTiltX = Math.sin(ang) * 0.35;
+                    const baseTiltZ = -Math.cos(ang) * 0.35;
+                    tentacle.rotation.set(baseTiltX, 0, baseTiltZ);
+
+                    group.add(tentacle);
+                    tentacles.push({ mesh: tentacle, baseTiltX, baseTiltZ, phase: t * 0.6 + a });
+                }
+
+                group.position.set(cx, getSandHeightAt(cx, cz) - 0.05, cz);
+                scene.add(group);
+                animatedAnemones.push(tentacles);
+            }
+        }
+
+        function buildSeaweedForest() {
+            const weedColors = [0x1bc958, 0x00ba6c, 0x42db66, 0x009e88];
+
+            for (let cluster = 0; cluster < 32; cluster++) {
+                let baseX, baseZ, attempts = 0;
+                do {
+                    baseX = (Math.random() - 0.5) * (POND.width - 2.5);
+                    baseZ = (Math.random() - 0.5) * (POND.depth - 2.5);
+                    attempts++;
+                } while (isInsideProtectedZone(baseX, baseZ, 1.2) && attempts < 40);
+
+                if (attempts >= 40) continue;
+
+                const isTallKelp = cluster % 3 === 0;
+                const blades = isTallKelp ? (3 + Math.floor(Math.random() * 3)) : (2 + Math.floor(Math.random() * 3));
+
+                const mat = new THREE.MeshStandardMaterial({
+                    color: weedColors[cluster % weedColors.length],
+                    emissive: 0x064f20,
+                    emissiveIntensity: 0.12,
+                    roughness: 0.42,
+                    side: THREE.DoubleSide
+                });
+
+                for (let b = 0; b < blades; b++) {
+                    const bladeH = isTallKelp ? (5.2 + Math.random() * 4.5) : (2.2 + Math.random() * 2.5);
+                    const bladeW = isTallKelp ? 0.32 : 0.22;
+                    const bladeGeo = new THREE.PlaneGeometry(bladeW, bladeH, 2, 14);
+                    bladeGeo.translate(0, bladeH / 2, 0);
+
+                    const pos = bladeGeo.attributes.position;
+                    for (let v = 0; v < pos.count; v++) {
+                        const oy = pos.getY(v);
+                        const ratio = oy / bladeH;
+                        const taper = Math.sin(Math.min(1, ratio) * Math.PI * 0.85 + 0.25);
+                        pos.setX(v, pos.getX(v) * taper);
+                    }
+                    bladeGeo.computeVertexNormals();
+
+                    const bx = baseX + (Math.random() - 0.5) * 0.7;
+                    const bz = baseZ + (Math.random() - 0.5) * 0.7;
+                    const blade = new THREE.Mesh(bladeGeo, mat);
+                    blade.position.set(bx, getSandHeightAt(bx, bz) - 0.08, bz);
+                    blade.rotation.y = Math.random() * Math.PI;
+                    scene.add(blade);
+
+                    swayingFlora.push({
+                        mesh: blade,
+                        geo: bladeGeo,
+                        origPositions: Float32Array.from(bladeGeo.attributes.position.array),
+                        height: bladeH,
+                        speed: 1.5 + Math.random() * 1.1,
+                        phase: Math.random() * Math.PI * 2,
+                        amplitude: isTallKelp ? 0.65 : 0.38
+                    });
+                }
+            }
+        }
+
+        class MiniCrab3D {
+            constructor(x, z, colorHex) {
+                this.group = new THREE.Group();
+                const shellMat = new THREE.MeshPhysicalMaterial({
+                    color: colorHex,
+                    roughness: 0.32,
+                    clearcoat: 0.6
+                });
+                const clawMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xff9e40,
+                    roughness: 0.3,
+                    clearcoat: 0.7
+                });
+
+                const body = new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 10), shellMat);
+                body.scale.set(1.25, 0.55, 0.95);
+                body.position.y = 0.22;
+                this.group.add(body);
+
+                [-0.12, 0.12].forEach(ex => {
+                    const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.14, 6), shellMat);
+                    stalk.position.set(ex, 0.38, 0.22);
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), new THREE.MeshBasicMaterial({ color: 0x111827 }));
+                    eye.position.set(ex, 0.45, 0.23);
+                    this.group.add(stalk, eye);
+                });
+
+                this.claws = [];
+                [-1, 1].forEach(side => {
+                    const clawPivot = new THREE.Group();
+                    clawPivot.position.set(side * 0.36, 0.22, 0.24);
+                    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.12), clawMat);
+                    arm.position.set(side * 0.08, 0, 0.06);
+                    const pincer = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), clawMat);
+                    pincer.scale.set(1.2, 0.65, 0.9);
+                    pincer.position.set(side * 0.18, 0.02, 0.14);
+                    clawPivot.add(arm, pincer);
+                    this.group.add(clawPivot);
+                    this.claws.push(clawPivot);
+                });
+
+                this.legs = [];
+                for (let side of [-1, 1]) {
+                    for (let i = 0; i < 3; i++) {
+                        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.015, 0.28, 6), shellMat);
+                        leg.position.set(side * 0.36, 0.14, -0.14 + i * 0.13);
+                        leg.rotation.z = side * 0.85;
+                        this.group.add(leg);
+                        this.legs.push({ mesh: leg, side, index: i });
+                    }
+                }
+
+                this.group.position.set(x, getSandHeightAt(x, z), z);
+                scene.add(this.group);
+
+                this.moveDir = Math.random() > 0.5 ? 1 : -1;
+                this.speed = 0.014 + Math.random() * 0.01;
+                this.phase = Math.random() * Math.PI * 2;
+                this.pauseTimer = 0;
+            }
+
+            update(elapsed) {
+                if (this.pauseTimer > 0) {
+                    this.pauseTimer -= 0.016;
+                    this.claws[0].rotation.y = Math.sin(elapsed * 4 + this.phase) * 0.2;
+                    this.claws[1].rotation.y = -Math.sin(elapsed * 4 + this.phase) * 0.2;
+                    return;
+                }
+
+                if (Math.random() < 0.008) {
+                    this.pauseTimer = 1.0 + Math.random() * 1.8;
+                    if (Math.random() < 0.5) this.moveDir *= -1;
+                    return;
+                }
+
+                const forwardRight = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), this.group.rotation.y);
+                this.group.position.addScaledVector(forwardRight, this.moveDir * this.speed);
+
+                const limitX = POND.width * 0.42;
+                const limitZ = POND.depth * 0.4;
+                if (Math.abs(this.group.position.x) > limitX || Math.abs(this.group.position.z) > limitZ) {
+                    this.moveDir *= -1;
+                    this.group.position.x = Math.max(-limitX, Math.min(limitX, this.group.position.x));
+                    this.group.position.z = Math.max(-limitZ, Math.min(limitZ, this.group.position.z));
+                }
+
+                this.group.position.y = getSandHeightAt(this.group.position.x, this.group.position.z);
+
+                const stepCycle = elapsed * 14 + this.phase;
+                for (let i = 0; i < this.legs.length; i++) {
+                    const l = this.legs[i];
+                    const offset = (l.index % 2 === 0 ? 0 : Math.PI) + (l.side > 0 ? 0 : Math.PI * 0.5);
+                    l.mesh.rotation.z = l.side * (0.85 + Math.sin(stepCycle + offset) * 0.28);
+                    l.mesh.rotation.y = Math.cos(stepCycle + offset) * 0.22;
+                }
+            }
+        }
+
+        class Lobster3D {
+            constructor(x, z) {
+                this.group = new THREE.Group();
+                const bodyMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xd93845,
+                    emissive: 0x45090e,
+                    emissiveIntensity: 0.1,
+                    roughness: 0.3,
+                    clearcoat: 0.75
+                });
+                const accentMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xf2704b,
+                    roughness: 0.35,
+                    clearcoat: 0.65
+                });
+
+                const carapace = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.32, 0.85, 12), bodyMat);
+                carapace.rotation.x = Math.PI / 2;
+                carapace.position.set(0, 0.28, 0.15);
+                this.group.add(carapace);
+
+                this.tailGroup = new THREE.Group();
+                this.tailGroup.position.set(0, 0.26, -0.28);
+                for (let s = 0; s < 4; s++) {
+                    const segR = 0.26 - s * 0.035;
+                    const seg = new THREE.Mesh(new THREE.CylinderGeometry(segR * 0.9, segR, 0.24, 10), s % 2 === 0 ? bodyMat : accentMat);
+                    seg.rotation.x = Math.PI / 2;
+                    seg.position.set(0, -s * 0.02, -s * 0.2);
+                    this.tailGroup.add(seg);
+                }
+                const tailFan = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.04, 0.26), accentMat);
+                tailFan.position.set(0, -0.09, -0.85);
+                this.tailGroup.add(tailFan);
+                this.group.add(this.tailGroup);
+
+                this.claws = [];
+                [-1, 1].forEach(side => {
+                    const clawGroup = new THREE.Group();
+                    clawGroup.position.set(side * 0.3, 0.25, 0.55);
+                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.42, 8), accentMat);
+                    arm.rotation.x = Math.PI / 2;
+                    arm.rotation.z = -side * 0.35;
+                    arm.position.set(side * 0.1, 0, 0.18);
+
+                    const bigClaw = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), bodyMat);
+                    bigClaw.scale.set(0.75, 0.55, 1.85);
+                    bigClaw.position.set(side * 0.2, 0.02, 0.48);
+                    clawGroup.add(arm, bigClaw);
+                    this.group.add(clawGroup);
+                    this.claws.push(clawGroup);
+                });
+
+                this.antennae = [];
+                [-1, 1].forEach(side => {
+                    const curve = new THREE.CatmullRomCurve3([
+                        new THREE.Vector3(side * 0.1, 0.34, 0.58),
+                        new THREE.Vector3(side * 0.32, 0.55, 1.05),
+                        new THREE.Vector3(side * 0.55, 0.72, 1.55)
+                    ]);
+                    const ant = new THREE.Mesh(new THREE.TubeGeometry(curve, 10, 0.015, 5, false), accentMat);
+                    this.group.add(ant);
+                    this.antennae.push(ant);
+                });
+
+                this.legs = [];
+                for (let side of [-1, 1]) {
+                    for (let i = 0; i < 4; i++) {
+                        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.018, 0.36, 6), accentMat);
+                        leg.position.set(side * 0.32, 0.15, -0.15 + i * 0.16);
+                        leg.rotation.z = side * 0.75;
+                        this.group.add(leg);
+                        this.legs.push({ mesh: leg, side, index: i });
+                    }
+                }
+
+                this.group.position.set(x, getSandHeightAt(x, z), z);
+                this.group.rotation.y = Math.random() * Math.PI * 2;
+                scene.add(this.group);
+
+                this.targetYaw = this.group.rotation.y;
+                this.speed = 0.012;
+                this.phase = Math.random() * Math.PI * 2;
+            }
+
+            update(elapsed) {
+                if (Math.random() < 0.012) {
+                    this.targetYaw += (Math.random() - 0.5) * 1.4;
+                }
+
+                let diff = this.targetYaw - this.group.rotation.y;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                this.group.rotation.y += diff * 0.04;
+
+                const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), this.group.rotation.y);
+                this.group.position.addScaledVector(forward, this.speed);
+
+                const limitX = POND.width * 0.4;
+                const limitZ = POND.depth * 0.38;
+                if (Math.abs(this.group.position.x) > limitX || Math.abs(this.group.position.z) > limitZ) {
+                    this.targetYaw += Math.PI * 0.75;
+                    this.group.position.x = Math.max(-limitX, Math.min(limitX, this.group.position.x));
+                    this.group.position.z = Math.max(-limitZ, Math.min(limitZ, this.group.position.z));
+                }
+
+                this.group.position.y = getSandHeightAt(this.group.position.x, this.group.position.z);
+
+                this.antennae[0].rotation.y = Math.sin(elapsed * 3.2 + this.phase) * 0.14;
+                this.antennae[1].rotation.y = -Math.sin(elapsed * 3.2 + this.phase) * 0.14;
+                this.tailGroup.rotation.x = Math.sin(elapsed * 2.5 + this.phase) * 0.08;
+                this.claws[0].rotation.y = Math.sin(elapsed * 2.0 + this.phase) * 0.12;
+                this.claws[1].rotation.y = -Math.sin(elapsed * 2.0 + this.phase) * 0.12;
+
+                const walkCycle = elapsed * 10 + this.phase;
+                for (let i = 0; i < this.legs.length; i++) {
+                    const l = this.legs[i];
+                    const offset = l.index * 1.1 + (l.side > 0 ? 0 : Math.PI);
+                    l.mesh.rotation.x = Math.sin(walkCycle + offset) * 0.25;
+                }
+            }
+        }
+
+        function buildSeabedCritters() {
+            const crabColors = [0xff595e, 0xff924c, 0xf5c024, 0xff477e];
+            for (let i = 0; i < 4; i++) {
+                let cx, cz, attempts = 0;
+                do {
+                    cx = (Math.random() - 0.5) * (POND.width * 0.65);
+                    cz = (Math.random() - 0.5) * (POND.depth * 0.65);
+                    attempts++;
+                } while (isInsideProtectedZone(cx, cz, 1.0) && attempts < 40);
+
+                miniCrabs.push(new MiniCrab3D(cx, cz, crabColors[i % crabColors.length]));
+            }
+
+            for (let j = 0; j < 2; j++) {
+                let lx, lz, attempts = 0;
+                do {
+                    lx = (j === 0 ? -1 : 1) * (4 + Math.random() * 5);
+                    lz = (Math.random() - 0.5) * (POND.depth * 0.55);
+                    attempts++;
+                } while (isInsideProtectedZone(lx, lz, 1.0) && attempts < 40);
+
+                lobsters.push(new Lobster3D(lx, lz));
+            }
+        }
+
+        function buildPlanktonParticles() {
+            const count = 220;
+            const geo = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * POND.width;
+                positions[i * 3 + 1] = POND.floorY + 0.5 + Math.random() * (POND.surfaceY - POND.floorY - 0.8);
+                positions[i * 3 + 2] = (Math.random() - 0.5) * POND.depth;
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            planktonOrigPositions = Float32Array.from(positions);
+
+            const mat = new THREE.PointsMaterial({
+                color: 0xbef8ff,
+                size: 0.12,
+                transparent: true,
+                opacity: 0.45,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            planktonPoints = new THREE.Points(geo, mat);
+            scene.add(planktonPoints);
+        }
+
+        function buildGlassTankBounds() {
+            const boxGeo = new THREE.BoxGeometry(POND.width, POND.height, POND.depth);
+            const edges = new THREE.EdgesGeometry(boxGeo);
+            const lineMat = new THREE.LineBasicMaterial({
+                color: 0xccf7ff,
+                transparent: true,
+                opacity: 0.24
+            });
+            const wireframe = new THREE.LineSegments(edges, lineMat);
+            wireframe.position.y = (POND.floorY + POND.surfaceY) / 2;
+            scene.add(wireframe);
+        }
+
+        class SwimmingFish3D {
+            constructor(spriteCanvas, x, y, z) {
+                const texture = new THREE.CanvasTexture(spriteCanvas);
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+
+                const aspect = spriteCanvas.width / spriteCanvas.height;
+                const fishHeight = 2.3;
+                const fishWidth = fishHeight * aspect;
+
+                this.geometry = new THREE.PlaneGeometry(fishWidth, fishHeight, 16, 2);
+                this.origPositions = Float32Array.from(this.geometry.attributes.position.array);
+                this.fishWidth = fishWidth;
+
+                const material = new THREE.MeshStandardMaterial({
+                    map: texture,
+                    transparent: true,
+                    alphaTest: 0.08,
+                    side: THREE.DoubleSide,
+                    roughness: 0.42,
+                    metalness: 0.04
+                });
+
+                this.mesh = new THREE.Mesh(this.geometry, material);
+                this.mesh.position.set(x, y, z);
+                scene.add(this.mesh);
+
+                const dirX = Math.random() > 0.5 ? 1 : -1;
+                this.velocity = new THREE.Vector3(
+                    dirX * (0.045 + Math.random() * 0.04),
+                    (Math.random() - 0.5) * 0.015,
+                    (Math.random() - 0.5) * 0.035
+                );
+                this.targetVelocity = this.velocity.clone();
+
+                this.swimPhase = Math.random() * Math.PI * 2;
+                this.swimSpeed = 0.16 + Math.random() * 0.06;
+                this.sizeBoost = 1.0;
+                this.currentYaw = dirX > 0 ? 0 : Math.PI;
+            }
+
+            update(dt, elapsedTime) {
+                this.swimPhase += this.swimSpeed;
+
+                let nearestFood = null;
+                let minDist = 11.0;
+
+                for (let i = 0; i < foods3D.length; i++) {
+                    const f = foods3D[i];
+                    const dist = this.mesh.position.distanceTo(f.mesh.position);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearestFood = f;
+                    }
+                }
+
+                if (nearestFood) {
+                    const dir = new THREE.Vector3().subVectors(nearestFood.mesh.position, this.mesh.position).normalize();
+                    const chaseSpeed = 0.095;
+                    this.velocity.lerp(dir.multiplyScalar(chaseSpeed), 0.07);
+                    this.swimPhase += 0.12;
+
+                    if (minDist < 1.15) {
+                        scene.remove(nearestFood.mesh);
+                        foods3D.splice(foods3D.indexOf(nearestFood), 1);
+                        sound.playNibble();
+                        this.sizeBoost = Math.min(1.32, this.sizeBoost + 0.03);
+                        this.mesh.scale.setScalar(this.sizeBoost);
+
+                        for (let b = 0; b < 4; b++) {
+                            spawnBubble3D(
+                                this.mesh.position.x + (Math.random() - 0.5) * 0.6,
+                                this.mesh.position.y + 0.3,
+                                this.mesh.position.z + (Math.random() - 0.5) * 0.6
+                            );
+                        }
+                    }
+                } else {
+                    if (Math.random() < 0.018) {
+                        const speed = 0.045 + Math.random() * 0.035;
+                        const angleXZ = Math.random() * Math.PI * 2;
+                        this.targetVelocity.set(
+                            Math.cos(angleXZ) * speed,
+                            (Math.random() - 0.5) * 0.025,
+                            Math.sin(angleXZ) * speed
+                        );
+                    }
+                    this.velocity.lerp(this.targetVelocity, 0.03);
+                }
+
+                this.mesh.position.add(this.velocity);
+                this.mesh.position.y += Math.sin(elapsedTime * 2.2 + this.swimPhase * 0.3) * 0.004;
+
+                const boundX = POND.width * 0.44;
+                const boundZ = POND.depth * 0.42;
+                const minY = POND.floorY + 1.8;
+                const maxY = POND.surfaceY - 1.4;
+
+                if (this.mesh.position.x > boundX) {
+                    this.mesh.position.x = boundX;
+                    this.velocity.x = -Math.abs(this.velocity.x);
+                    this.targetVelocity.x = -Math.abs(this.targetVelocity.x);
+                } else if (this.mesh.position.x < -boundX) {
+                    this.mesh.position.x = -boundX;
+                    this.velocity.x = Math.abs(this.velocity.x);
+                    this.targetVelocity.x = Math.abs(this.targetVelocity.x);
+                }
+
+                if (this.mesh.position.z > boundZ) {
+                    this.mesh.position.z = boundZ;
+                    this.velocity.z = -Math.abs(this.velocity.z);
+                    this.targetVelocity.z = -Math.abs(this.targetVelocity.z);
+                } else if (this.mesh.position.z < -boundZ) {
+                    this.mesh.position.z = -boundZ;
+                    this.velocity.z = Math.abs(this.velocity.z);
+                    this.targetVelocity.z = Math.abs(this.targetVelocity.z);
+                }
+
+                if (this.mesh.position.y < minY) {
+                    this.mesh.position.y = minY;
+                    this.velocity.y = Math.abs(this.velocity.y) * 0.5;
+                    this.targetVelocity.y = 0.015;
+                } else if (this.mesh.position.y > maxY) {
+                    this.mesh.position.y = maxY;
+                    this.velocity.y = -Math.abs(this.velocity.y) * 0.5;
+                    this.targetVelocity.y = -0.015;
+                }
+
+                const horizSpeed = Math.hypot(this.velocity.x, this.velocity.z);
+                if (horizSpeed > 0.004) {
+                    const desiredYaw = Math.atan2(-this.velocity.z, this.velocity.x);
+                    let diff = desiredYaw - this.currentYaw;
+                    while (diff > Math.PI) diff -= Math.PI * 2;
+                    while (diff < -Math.PI) diff += Math.PI * 2;
+                    this.currentYaw += diff * 0.1;
+                }
+                this.mesh.rotation.y = this.currentYaw;
+
+                const pitch = Math.max(-0.35, Math.min(0.35, this.velocity.y * 4.5));
+                this.mesh.rotation.z = pitch;
+
+                const posAttr = this.geometry.attributes.position;
+                const halfW = this.fishWidth / 2;
+
+                for (let i = 0; i < posAttr.count; i++) {
+                    const ox = this.origPositions[i * 3];
+                    const progress = (ox + halfW) / this.fishWidth;
+                    const flexibility = Math.pow(1 - progress, 1.65);
+                    const waveZ = Math.sin(this.swimPhase - progress * 3.5) * (0.34 * flexibility);
+                    posAttr.setZ(i, waveZ);
+                }
+                posAttr.needsUpdate = true;
+
+                if (Math.random() < 0.005) {
+                    spawnBubble3D(this.mesh.position.x, this.mesh.position.y, this.mesh.position.z, 0.08);
+                }
+            }
+
+            dispose() {
+                scene.remove(this.mesh);
+                this.geometry.dispose();
+                if (this.mesh.material.map) this.mesh.material.map.dispose();
+                this.mesh.material.dispose();
+            }
+        }
+
+        const sharedBubbleGeo = new THREE.SphereGeometry(1, 12, 12);
+        const sharedBubbleMat = new THREE.MeshPhysicalMaterial({
+            color: 0xe6fbff,
+            transparent: true,
+            opacity: 0.36,
+            roughness: 0.08,
+            metalness: 0.08,
+            clearcoat: 0.9
+        });
+
+        function spawnBubble3D(x, y, z, radius = null) {
+            const r = radius ?? (0.09 + Math.random() * 0.18);
+            const mesh = new THREE.Mesh(sharedBubbleGeo, sharedBubbleMat);
+            mesh.scale.setScalar(r);
+            mesh.position.set(
+                x ?? (Math.random() - 0.5) * POND.width,
+                y ?? POND.floorY + 0.3,
+                z ?? (Math.random() - 0.5) * POND.depth
+            );
+            scene.add(mesh);
+
+            bubbles3D.push({
+                mesh,
+                speed: 0.03 + Math.random() * 0.045,
+                wobble: Math.random() * Math.PI * 2
+            });
+        }
+
+        const sharedFoodGeo = new THREE.SphereGeometry(0.18, 10, 10);
+        const sharedFoodMat = new THREE.MeshStandardMaterial({
+            color: 0xf59516,
+            emissive: 0xb85800,
+            emissiveIntensity: 0.18,
+            roughness: 0.35
+        });
+
+        function dropFood3DAt(x, y, z) {
+            for (let i = 0; i < 4; i++) {
+                const mesh = new THREE.Mesh(sharedFoodGeo, sharedFoodMat);
+                mesh.position.set(
+                    x + (Math.random() - 0.5) * 1.4,
+                    Math.min(POND.surfaceY - 0.3, y + (Math.random() - 0.5) * 0.6),
+                    z + (Math.random() - 0.5) * 1.4
+                );
+                scene.add(mesh);
+
+                foods3D.push({
+                    mesh,
+                    vy: 0.02 + Math.random() * 0.015,
+                    wobble: Math.random() * Math.PI * 2
+                });
+            }
+            sound.playBubble(1.2);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const dt = clock.getDelta();
+            const elapsed = clock.getElapsedTime();
+
+            const sPos = surfaceGeo.attributes.position;
+            for (let i = 0; i < sPos.count; i++) {
+                const ox = surfaceOrigPositions[i * 3];
+                const oz = surfaceOrigPositions[i * 3 + 2];
+                const waveY =
+                    Math.sin(ox * 0.45 + elapsed * 2.1) * 0.16 +
+                    Math.cos(oz * 0.5 + elapsed * 1.7) * 0.14 +
+                    Math.sin((ox + oz) * 0.35 + elapsed * 2.6) * 0.08;
+                sPos.setY(i, surfaceOrigPositions[i * 3 + 1] + waveY);
+            }
+            sPos.needsUpdate = true;
+            surfaceGeo.computeVertexNormals();
+
+            if (causticTexture) {
+                causticTexture.offset.x = Math.sin(elapsed * 0.25) * 0.3;
+                causticTexture.offset.y = elapsed * 0.06;
+            }
+
+            for (let i = 0; i < sunBeams.length; i++) {
+                const sb = sunBeams[i];
+                sb.mesh.rotation.z = sb.baseRotZ + Math.sin(elapsed * 0.55 + sb.phase) * 0.07;
+            }
+
+            if (bgBubblesGroup) {
+                bgBubblesGroup.rotation.y = elapsed * 0.025;
+                bgBubblesGroup.children.forEach(orb => {
+                    orb.position.y = orb.userData.baseY + Math.sin(elapsed * orb.userData.speed + orb.userData.phase) * 1.2;
+                });
+            }
+
+            if (planktonPoints && planktonOrigPositions) {
+                const pPos = planktonPoints.geometry.attributes.position;
+                for (let i = 0; i < pPos.count; i++) {
+                    const ox = planktonOrigPositions[i * 3];
+                    const oy = planktonOrigPositions[i * 3 + 1];
+                    const oz = planktonOrigPositions[i * 3 + 2];
+                    pPos.setX(i, ox + Math.sin(elapsed * 0.7 + oy * 0.5 + i) * 0.45);
+                    pPos.setY(i, oy + Math.cos(elapsed * 0.6 + ox * 0.4 + i) * 0.25);
+                    pPos.setZ(i, oz + Math.sin(elapsed * 0.65 + oz * 0.5 + i) * 0.45);
+                }
+                pPos.needsUpdate = true;
+            }
+
+            for (let i = 0; i < swayingFlora.length; i++) {
+                const f = swayingFlora[i];
+                const pos = f.geo.attributes.position;
+                for (let v = 0; v < pos.count; v++) {
+                    const oy = f.origPositions[v * 3 + 1];
+                    const ratio = Math.max(0, oy / f.height);
+                    const swayX = Math.sin(elapsed * f.speed + f.phase + ratio * 2.4) * (f.amplitude * ratio);
+                    const swayZ = Math.cos(elapsed * (f.speed * 0.8) + f.phase + ratio * 2.0) * (f.amplitude * 0.5 * ratio);
+                    pos.setX(v, f.origPositions[v * 3] + swayX);
+                    pos.setZ(v, f.origPositions[v * 3 + 2] + swayZ);
+                }
+                pos.needsUpdate = true;
+            }
+
+            for (let a = 0; a < animatedAnemones.length; a++) {
+                const group = animatedAnemones[a];
+                for (let t = 0; t < group.length; t++) {
+                    const item = group[t];
+                    item.mesh.rotation.x = item.baseTiltX + Math.sin(elapsed * 2.4 + item.phase) * 0.16;
+                    item.mesh.rotation.z = item.baseTiltZ + Math.cos(elapsed * 2.1 + item.phase) * 0.16;
+                }
+            }
+
+            for (let c = 0; c < miniCrabs.length; c++) {
+                miniCrabs[c].update(elapsed);
+            }
+            for (let l = 0; l < lobsters.length; l++) {
+                lobsters[l].update(elapsed);
+            }
+
+            for (let i = 0; i < fishes3D.length; i++) {
+                fishes3D[i].update(dt, elapsed);
+            }
+
+            if (followedFishIndex >= 0 && fishes3D[followedFishIndex]) {
+                const targetPos = fishes3D[followedFishIndex].mesh.position;
+                const deltaMove = new THREE.Vector3().subVectors(targetPos, prevFollowPos);
+                camera.position.add(deltaMove);
+                controls.target.lerp(targetPos, 0.15);
+                prevFollowPos.copy(targetPos);
+            } else if (followedFishIndex >= 0) {
+                setFollowedFish(-1);
+            }
+
+            for (let i = foods3D.length - 1; i >= 0; i--) {
+                const f = foods3D[i];
+                f.wobble += 0.08;
+                f.mesh.position.y -= f.vy;
+                f.mesh.position.x += Math.sin(f.wobble) * 0.012;
+
+                if (f.mesh.position.y <= POND.floorY + 0.2) {
+                    scene.remove(f.mesh);
+                    foods3D.splice(i, 1);
+                }
+            }
+
+            if (bubbles3D.length < 55 && Math.random() < 0.12) {
+                spawnBubble3D();
+            }
+
+            for (let i = bubbles3D.length - 1; i >= 0; i--) {
+                const b = bubbles3D[i];
+                b.wobble += 0.05;
+                b.mesh.position.y += b.speed;
+                b.mesh.position.x += Math.sin(b.wobble) * 0.015;
+
+                if (b.mesh.position.y >= POND.surfaceY) {
+                    scene.remove(b.mesh);
+                    bubbles3D.splice(i, 1);
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        const drawingModal = document.getElementById('drawingModal');
+        const fishCountEl = document.getElementById('fishCount');
+
+        function updateFishCounter() {
+            fishCountEl.textContent = fishes3D.length;
+        }
+
+        document.getElementById('openDrawModalBtn').addEventListener('click', () => {
+            drawingModal.classList.remove('hidden');
+            resizeDrawCanvas();
+            sound.playBubble(1.1);
+        });
+
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            drawingModal.classList.add('hidden');
+        });
+
+        document.getElementById('spawnFishBtn').addEventListener('click', () => {
+            const sprite = extractTrimmedFishSprite();
+            if (!sprite) {
+                showToast('Gambar ikan dulu di kanvas.');
+                return;
+            }
+
+            const sx = (Math.random() - 0.5) * 10;
+            const sy = (Math.random() - 0.3) * 6;
+            const sz = (Math.random() - 0.5) * 8;
+
+            const newFish = new SwimmingFish3D(sprite, sx, sy, sz);
+            fishes3D.push(newFish);
+            updateFishCounter();
+
+            for (let i = 0; i < 16; i++) {
+                spawnBubble3D(
+                    sx + (Math.random() - 0.5) * 2.5,
+                    sy + (Math.random() - 0.5) * 2.0,
+                    sz + (Math.random() - 0.5) * 2.5,
+                    0.1 + Math.random() * 0.16
+                );
+            }
+
+            sound.playSplashSpawn();
+            drawingModal.classList.add('hidden');
+            clearDrawingBoard();
+            showToast('Ikan dilepaskan ke kolam!');
+        });
+
+        let pointerDownPos = { x: 0, y: 0 };
+        container3D.addEventListener('pointerdown', (e) => {
+            pointerDownPos = { x: e.clientX, y: e.clientY };
+        });
+
+        container3D.addEventListener('pointerup', (e) => {
+            const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+            if (dist > 6) return;
+
+            const mouse = new THREE.Vector2(
+                (e.clientX / window.innerWidth) * 2 - 1,
+                -(e.clientY / window.innerHeight) * 2 + 1
+            );
+            raycaster.setFromCamera(mouse, camera);
+
+            if (fishes3D.length > 0) {
+                const fishMeshes = fishes3D.map(f => f.mesh);
+                const fishHits = raycaster.intersectObjects(fishMeshes, false);
+                if (fishHits.length > 0) {
+                    const hitMesh = fishHits[0].object;
+                    const idx = fishes3D.findIndex(f => f.mesh === hitMesh);
+                    if (idx !== -1) {
+                        setFollowedFish(idx);
+                        sound.playBubble(1.3);
+                        showToast(`Mengikuti Ikan #${idx + 1}`);
+                        return;
+                    }
+                }
+            }
+
+            const targetPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+            const hitPoint = new THREE.Vector3();
+            if (raycaster.ray.intersectPlane(targetPlane, hitPoint)) {
+                const clampedX = Math.max(-POND.width * 0.42, Math.min(POND.width * 0.42, hitPoint.x));
+                const clampedY = Math.max(POND.floorY + 2.5, Math.min(POND.surfaceY - 0.5, hitPoint.y));
+                const clampedZ = (Math.random() - 0.5) * 6;
+                dropFood3DAt(clampedX, clampedY, clampedZ);
+            }
+        });
+
+        document.getElementById('followFishBtn').addEventListener('click', () => {
+            if (fishes3D.length === 0) {
+                showToast('Belum ada ikan di kolam.');
+                return;
+            }
+            const nextIdx = (followedFishIndex + 1) % fishes3D.length;
+            setFollowedFish(nextIdx);
+            sound.playBubble(1.25);
+            showToast(`Mengikuti Ikan #${nextIdx + 1}`);
+        });
+
+        document.getElementById('dropFoodBtn').addEventListener('click', () => {
+            const rx = (Math.random() - 0.5) * (POND.width * 0.6);
+            const rz = (Math.random() - 0.5) * (POND.depth * 0.6);
+            dropFood3DAt(rx, POND.surfaceY - 0.6, rz);
+            if (fishes3D.length === 0) {
+                showToast('Makanan ditabur! Gambar ikan dulu.');
+            }
+        });
+
+        document.getElementById('bubbleBurstBtn').addEventListener('click', () => {
+            for (let i = 0; i < 25; i++) {
+                spawnBubble3D(
+                    (Math.random() - 0.5) * POND.width * 0.85,
+                    POND.floorY + Math.random() * 1.5,
+                    (Math.random() - 0.5) * POND.depth * 0.85,
+                    0.12 + Math.random() * 0.22
+                );
+            }
+            sound.playBubble(0.95);
+        });
+
+        document.getElementById('resetCamBtn').addEventListener('click', () => {
+            resetCameraPosition();
+            sound.playBubble(1.1);
+            showToast('Kamera direset.');
+        });
+
+        document.getElementById('clearPondBtn').addEventListener('click', () => {
+            if (fishes3D.length === 0) {
+                showToast('Kolam sudah kosong.');
+                return;
+            }
+            setFollowedFish(-1);
+            fishes3D.forEach(f => f.dispose());
+            fishes3D.length = 0;
+
+            foods3D.forEach(f => scene.remove(f.mesh));
+            foods3D.length = 0;
+
+            updateFishCounter();
+            sound.playBubble(0.75);
+            showToast('Kolam dikosongkan.');
+        });
+
+        document.getElementById('toggleSoundBtn').addEventListener('click', () => {
+            const isMuted = sound.toggleMute();
+            document.getElementById('soundIconOn').classList.toggle('hidden', isMuted);
+            document.getElementById('soundIconOff').classList.toggle('hidden', !isMuted);
+            showToast(isMuted ? 'Suara mati' : 'Suara aktif');
+        });
+
+        window.onload = function () {
+            initThreeJSAquarium();
+            resizeDrawCanvas();
+            drawPresetFish(0);
+            animate();
+        };
+    </script>
+</body>
+</html>
